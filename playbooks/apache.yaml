@@ -1,0 +1,53 @@
+# =============================================================================
+# VCERT PLAYBOOK - Apache HTTP Server (httpd)
+# =============================================================================
+# O Apache usa arquivos PEM separados via diretivas:
+#   SSLCertificateFile       -> certificado
+#   SSLCertificateKeyFile    -> chave privada
+#   SSLCertificateChainFile  -> cadeia (intermediarias)  [opcional em versoes novas]
+#
+# Executar:
+#   export VCERT_TOKEN="seu_access_token"
+#   vcert run -f playbooks/apache.yaml
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+
+certificateTasks:
+  - name: certificado-apache
+
+    renewBefore: 30d
+
+    request:
+      csr: local
+      subject:
+        commonName: "www.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU
+          - "Tecnologia da Informacao"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+      keyType: rsa
+      keySize: 2048
+      sanDNS:
+        - "www.suaempresa.com.br"
+        - "suaempresa.com.br"
+      validDays: 90
+      zone: "Certificates\\Producao\\Apache"
+
+    installations:
+      - format: PEM
+        # Caminhos tipicos no RHEL/Rocky: /etc/pki/tls/...  | Debian/Ubuntu: /etc/ssl/...
+        file: "/etc/pki/tls/certs/www.crt"
+        chainFile: "/etc/pki/tls/certs/www-chain.crt"
+        keyFile: "/etc/pki/tls/private/www.key"
+        backupFiles: true
+
+        # POS: valida a config e recarrega o Apache (graceful, sem derrubar conexoes).
+        afterInstallAction: "/usr/local/bin/post-renew-apache.sh"

@@ -1,0 +1,67 @@
+# =============================================================================
+# VCERT PLAYBOOK - Apache Tomcat
+# =============================================================================
+# O Tomcat normalmente usa um keystore. Aqui usamos PKCS#12 (formato moderno,
+# recomendado em vez de JKS). No server.xml, aponte o Connector para ele:
+#
+#   <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+#              SSLEnabled="true">
+#     <SSLHostConfig>
+#       <Certificate certificateKeystoreFile="/etc/tomcat/certs/app.p12"
+#                    certificateKeystorePassword="${VCERT_P12_PASS}"
+#                    certificateKeystoreType="PKCS12" />
+#     </SSLHostConfig>
+#   </Connector>
+#
+# Executar:
+#   export VCERT_TOKEN="seu_access_token"
+#   export VCERT_P12_PASS="senha_forte_do_keystore"
+#   vcert run -f playbooks/tomcat.yaml
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+
+certificateTasks:
+  - name: certificado-tomcat
+
+    renewBefore: 30d
+
+    request:
+      csr: local
+      subject:
+        commonName: "app.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU
+          - "Aplicacoes Java"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+      keyType: rsa
+      keySize: 2048
+      sanDNS:
+        - "app.suaempresa.com.br"
+      validDays: 90
+      zone: "Certificates\\Producao\\Tomcat"
+
+    installations:
+      # PKCS#12 (recomendado). Para JKS, troque format por JKS e use jksAlias/jksPassword.
+      - format: PKCS12
+        file: "/etc/tomcat/certs/app.p12"
+        password: "{{ Env \"VCERT_P12_PASS\" }}"
+        backupFiles: true
+
+        # POS: reinicia o Tomcat para recarregar o keystore.
+        afterInstallAction: "/usr/local/bin/post-renew-tomcat.sh"
+
+      # ---- Alternativa JKS (descomente e remova o bloco PKCS12 acima) ----
+      # - format: JKS
+      #   file: "/etc/tomcat/certs/app.jks"
+      #   jksAlias: "app"
+      #   jksPassword: "{{ Env \"VCERT_JKS_PASS\" }}"
+      #   backupFiles: true
+      #   afterInstallAction: "/usr/local/bin/post-renew-tomcat.sh"

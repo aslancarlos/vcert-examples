@@ -11,6 +11,7 @@ O foco deste repositório é o modelo de **playbook** do VCERT (`vcert run -f pl
 ## Índice
 
 - [O que é o VCERT](#o-que-é-o-vcert)
+- [Como funciona (diagrama)](#como-funciona-diagrama)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação rápida](#instalação-rápida)
 - [Início rápido (Quickstart)](#início-rápido-quickstart)
@@ -33,6 +34,25 @@ O [VCERT](https://github.com/Venafi/vcert) é a ferramenta de linha de comando (
 - **Recuperar (pickup)** certificados emitidos.
 - **Revogar** certificados.
 - Rodar **playbooks** que orquestram o ciclo de vida completo, incluindo a instalação dos arquivos e hooks de pré/pós ação.
+
+---
+
+## Como funciona (diagrama)
+
+```mermaid
+flowchart TD
+    A([cron / systemd timer]) --> B[vcert run -f playbook.yaml]
+    B --> C{Dentro da janela<br/>renewBefore?}
+    C -- Nao --> Z([Encerra: nada a fazer])
+    C -- Sim --> D[Gera CSR + chave local<br/>O, OU, algoritmo, keySize]
+    D --> E[CyberArk Certificate Manager<br/>aplica a policy/zone e emite]
+    E --> F[beforeInstallAction<br/>ACAO PRE]
+    F --> G[Grava arquivos<br/>PEM / PKCS12 / JKS<br/>+ backup .bak]
+    G --> H[afterInstallAction<br/>ACAO POS: reload/restart]
+    H --> I([Servico usando o<br/>certificado novo])
+```
+
+Mais diagramas (componentes e por serviço) em [`docs/architecture.md`](docs/architecture.md).
 
 ---
 
@@ -109,19 +129,26 @@ vcert-examples/
 │   ├── installation.md            # instalação do vcert
 │   ├── authentication.md          # autenticação (TPP token / SaaS API key)
 │   ├── playbook-reference.md      # referência dos campos do playbook
+│   ├── architecture.md            # diagramas de fluxo e por serviço
 │   └── best-practices.md          # boas práticas detalhadas
 ├── playbooks/
 │   ├── tpp-selfhosted.yaml        # exemplo completo Self-Hosted (TPP)
 │   ├── saas-vaas.yaml             # exemplo SaaS (VaaS)
-│   └── multi-format.yaml          # PEM + PKCS12 + JKS no mesmo certificado
+│   ├── multi-format.yaml          # PEM + PKCS12 + JKS no mesmo certificado
+│   ├── haproxy.yaml               # HAProxy
+│   ├── apache.yaml                # Apache (httpd)
+│   └── tomcat.yaml                # Tomcat (PKCS#12)
 ├── systemd/
 │   ├── vcert.service              # unit de serviço (oneshot)
 │   └── vcert.timer                # timer para renovação periódica
 ├── cron/
 │   └── vcert-cron.example         # entrada de crontab de exemplo
 └── scripts/
-    ├── pre-renew.sh               # exemplo de hook pré-renovação
-    └── post-renew.sh              # exemplo de hook pós-renovação
+    ├── pre-renew.sh               # hook pré-renovação (genérico)
+    ├── post-renew.sh              # hook pós-renovação (genérico)
+    ├── post-renew-haproxy.sh      # hook pós-renovação para HAProxy
+    ├── post-renew-apache.sh       # hook pós-renovação para Apache
+    └── post-renew-tomcat.sh       # hook pós-renovação para Tomcat
 ```
 
 ---
@@ -133,9 +160,12 @@ vcert-examples/
 | [`playbooks/tpp-selfhosted.yaml`](playbooks/tpp-selfhosted.yaml) | CyberArk Certificate Manager Self-Hosted (TPP) com access token, CSR local, hooks pré/pós. |
 | [`playbooks/saas-vaas.yaml`](playbooks/saas-vaas.yaml) | CyberArk Certificate Manager SaaS (VaaS) com API key. |
 | [`playbooks/multi-format.yaml`](playbooks/multi-format.yaml) | Mesma emissão gravada em PEM, PKCS#12 e JKS para apps diferentes. |
+| [`playbooks/haproxy.yaml`](playbooks/haproxy.yaml) | **HAProxy** — gera PEM único (cert+chain+key) e faz `reload`. |
+| [`playbooks/apache.yaml`](playbooks/apache.yaml) | **Apache (httpd)** — PEM separados e `graceful reload`. |
+| [`playbooks/tomcat.yaml`](playbooks/tomcat.yaml) | **Tomcat** — keystore PKCS#12 e `restart`. |
 | [`systemd/`](systemd/) | Renovação agendada via systemd timer. |
 | [`cron/`](cron/) | Renovação agendada via cron. |
-| [`scripts/`](scripts/) | Scripts de hook de pré e pós renovação. |
+| [`scripts/`](scripts/) | Scripts de hook de pré e pós renovação (genéricos e por serviço). |
 
 ---
 
@@ -144,6 +174,7 @@ vcert-examples/
 - [Instalação](docs/installation.md)
 - [Autenticação](docs/authentication.md)
 - [Referência do playbook](docs/playbook-reference.md)
+- [Arquitetura e diagramas](docs/architecture.md)
 - [Boas práticas](docs/best-practices.md)
 
 ---

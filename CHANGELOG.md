@@ -7,6 +7,12 @@ e este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 
 ## [Unreleased]
 
+### Adicionado
+- Playbooks dedicados: `playbooks/haproxy.yaml`, `playbooks/apache.yaml`, `playbooks/tomcat.yaml`.
+- Scripts de pós-renovação por serviço: `scripts/post-renew-haproxy.sh`, `post-renew-apache.sh`, `post-renew-tomcat.sh`.
+- `docs/architecture.md` com diagramas Mermaid (fluxo, componentes e por serviço).
+- Diagrama de fluxo no `README.md`.
+
 ## [1.0.0] - 2026-06-01
 
 ### Adicionado

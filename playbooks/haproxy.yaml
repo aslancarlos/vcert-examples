@@ -1,0 +1,56 @@
+# =============================================================================
+# VCERT PLAYBOOK - HAProxy
+# =============================================================================
+# O HAProxy espera UM unico arquivo PEM contendo, na ordem:
+#   certificado + cadeia (intermediarias) + chave privada
+#
+# O vcert grava os arquivos PEM separados (cert, chain, key). O script de
+# pos-renovacao (post-renew-haproxy.sh) concatena tudo no arquivo que o HAProxy
+# usa e recarrega o servico sem downtime (reload).
+#
+# Executar:
+#   export VCERT_TOKEN="seu_access_token"
+#   vcert run -f playbooks/haproxy.yaml
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+
+certificateTasks:
+  - name: certificado-haproxy
+
+    # Prazo para iniciar a renovacao
+    renewBefore: 30d
+
+    request:
+      csr: local
+      subject:
+        commonName: "lb.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU
+          - "Infraestrutura"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+      keyType: rsa
+      keySize: 2048
+      sanDNS:
+        - "lb.suaempresa.com.br"
+        - "www.suaempresa.com.br"
+      validDays: 90
+      zone: "Certificates\\Producao\\HAProxy"
+
+    installations:
+      - format: PEM
+        # Arquivos separados que o vcert grava:
+        file: "/etc/haproxy/certs/lb.crt"
+        chainFile: "/etc/haproxy/certs/lb.chain.crt"
+        keyFile: "/etc/haproxy/certs/lb.key"
+        backupFiles: true
+
+        # POS: concatena cert+chain+key em /etc/haproxy/certs/lb.pem e recarrega.
+        afterInstallAction: "/usr/local/bin/post-renew-haproxy.sh"
