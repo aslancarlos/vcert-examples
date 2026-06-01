@@ -45,11 +45,12 @@ flowchart TD
     C -- No --> Z([Exit: nothing to do])
     C -- Yes --> D[Generate CSR + local key<br/>O, OU, algorithm, keySize]
     D --> E[CyberArk Certificate Manager<br/>applies the policy/zone and issues]
-    E --> F[beforeInstallAction<br/>PRE ACTION]
-    F --> G[Write files<br/>PEM / PKCS12 / JKS<br/>+ .bak backup]
+    E --> G[Write files<br/>PEM / PKCS12 / JKS<br/>+ .bak backup]
     G --> H[afterInstallAction<br/>POST ACTION: reload/restart]
     H --> I([Service using the<br/>new certificate])
 ```
+
+> Pre-steps (PRE) are optional and run from a wrapper around `vcert run` — the playbook has no native pre-install hook. Only `afterInstallAction` (POST) exists.
 
 More diagrams (components and per-service) in [`docs/architecture.md`](docs/architecture.md).
 
@@ -149,7 +150,8 @@ vcert-examples/
 ├── cron/
 │   └── vcert-cron.example         # example crontab entry
 └── scripts/
-    ├── pre-renew.sh               # pre-renewal hook (generic)
+    ├── vcert-run.sh               # wrapper: runs PRE steps then `vcert run`
+    ├── pre-renew.sh               # pre-renewal steps (called by the wrapper)
     ├── post-renew.sh              # post-renewal hook (generic)
     ├── post-renew-haproxy.sh      # post-renewal hook for HAProxy
     ├── post-renew-apache.sh       # post-renewal hook for Apache

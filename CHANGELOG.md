@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Removed the non-existent `beforeInstallAction` field from all playbooks and docs. The VCERT playbook only supports `afterInstallAction`. Added `scripts/vcert-run.sh` as the supported way to run pre-install steps (wrap `vcert run`), and updated diagrams/reference/best-practices accordingly.
+
 ### Changed
 - Translated all documentation and inline code comments to English.
 

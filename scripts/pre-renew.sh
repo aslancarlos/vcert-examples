@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# PRE-RENEWAL hook
-# Run by VCERT (beforeInstallAction) BEFORE writing the new certificate.
+# PRE-RENEWAL steps
+# =============================================================================
+# IMPORTANT: the VCERT playbook has NO native before/pre-install hook. Do not
+# reference this from the playbook. Instead, call it from the wrapper
+# (scripts/vcert-run.sh) BEFORE `vcert run`.
+#
 # Use for: putting the app in maintenance, stopping a service, snapshots, etc.
+# Note: it runs on every invocation, even when nothing is renewed, so keep it
+# idempotent.
 # =============================================================================
 set -euo pipefail
 

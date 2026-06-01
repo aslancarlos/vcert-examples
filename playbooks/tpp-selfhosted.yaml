@@ -72,8 +72,11 @@ certificateTasks:
         keyFile: "/etc/ssl/app/app.key"
         backupFiles: true
 
-        # === PRE-RENEWAL ACTION === (before installing the new certificate)
-        beforeInstallAction: "/usr/local/bin/pre-renew.sh"
-
         # === POST-RENEWAL ACTION === (after installing; reloads the service)
+        # afterInstallAction is the ONLY action hook supported by the playbook.
+        # It runs after the certificate is installed (on enroll and on renewal).
         afterInstallAction: "/usr/local/bin/post-renew.sh"
+
+        # NOTE: there is no native "before/pre-install" hook. To run steps BEFORE
+        # vcert installs, schedule scripts/vcert-run.sh (wrapper) instead of vcert
+        # directly and put the pre-steps there.

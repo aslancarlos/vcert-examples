@@ -48,5 +48,6 @@ certificateTasks:
         chainFile: "/etc/ssl/api/chain.crt"
         keyFile: "/etc/ssl/api/api.key"
         backupFiles: true
-        beforeInstallAction: "/usr/local/bin/pre-renew.sh"
+        # afterInstallAction is the only action hook (runs after install).
+        # For pre-steps, wrap with scripts/vcert-run.sh (no native pre hook).
         afterInstallAction: "/usr/local/bin/post-renew.sh"

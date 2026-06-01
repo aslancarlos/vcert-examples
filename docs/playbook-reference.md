@@ -65,8 +65,9 @@ certificateTasks: # one or more certificate tasks
 | `capiFriendlyName` | Friendly name in the Windows store (CAPI). |
 | `capiIsNonExportable` | `true` marks the private key as non-exportable (CAPI). |
 | `backupFiles` | `true` makes a `.bak` backup before overwriting. |
-| `beforeInstallAction` | **PRE action** — command/script run before installing. |
-| `afterInstallAction` | **POST action** — command/script run after installing (e.g., reload a service). |
+| `afterInstallAction` | **POST action** — command/script run after install (on enroll and renewal). On *nix via `/bin/sh -c`; on Windows via `powershell.exe`. |
+
+> **There is no `beforeInstallAction` / pre-install hook.** `afterInstallAction` is the only action field. To run steps *before* installation, wrap `vcert run` in a script (see [`scripts/vcert-run.sh`](../scripts/vcert-run.sh)) and put the pre-steps there. Caveat: wrapper pre-steps run on every invocation, not only when a renewal actually happens.
 
 ## Mapping to the original request
 
@@ -78,7 +79,7 @@ certificateTasks: # one or more certificate tasks
 | Key size | `request.keySize` (RSA) / `request.keyCurve` (ECDSA) |
 | Validity period | `request.validDays` |
 | Lead time to start renewal | `certificateTasks[].renewBefore` |
-| PRE action on renewal | `installations[].beforeInstallAction` |
 | POST action on renewal | `installations[].afterInstallAction` |
+| PRE action on renewal | no native hook — use the [`scripts/vcert-run.sh`](../scripts/vcert-run.sh) wrapper |
 
 > ⚠️ The server-side **zone/policy** may override validity, algorithm, key size, and even the Subject. If the result differs from the playbook, the server-side policy is winning. Validate with `vcert run -f file.yaml --validate`.

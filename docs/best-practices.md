@@ -29,8 +29,8 @@ Recommendations for using VCERT with the CyberArk Certificate Manager safely and
 
 ## 5. Pre and post renewal hooks
 
-- **Pre (`beforeInstallAction`)**: prepare the environment (maintenance mode, snapshot). Use `|| true` on commands that may fail without compromising the renewal.
-- **Post (`afterInstallAction`)**: make sure the service **reads the new certificate**. Prefer `reload` over `restart` when possible (no downtime) and **test the config first** (e.g., `nginx -t && systemctl reload nginx`).
+- **Post (`afterInstallAction`)**: this is the **only** native action hook. It runs after install (on enroll and renewal), so it's the right place to make the service **read the new certificate**. Prefer `reload` over `restart` when possible (no downtime) and **test the config first** (e.g., `nginx -t && systemctl reload nginx`).
+- **Pre (no native hook)**: the playbook has no `beforeInstallAction`. To run steps before install (maintenance mode, snapshot), wrap `vcert run` in a script (see [`scripts/vcert-run.sh`](../scripts/vcert-run.sh)) and schedule the wrapper instead of `vcert`. Note these pre-steps run on every invocation, even when nothing is renewed — keep them idempotent and use `|| true` on commands that may fail safely.
 - Keep hooks **idempotent** and with **logging** (record start/end in `/var/log/vcert.log`).
 - Test the renewal end to end with `--force-renew` in a staging environment.
 

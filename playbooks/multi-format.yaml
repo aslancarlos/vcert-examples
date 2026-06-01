@@ -60,5 +60,4 @@ certificateTasks:
         jksAlias: "svc"
         jksPassword: "{{ Env \"VCERT_JKS_PASS\" }}"
         backupFiles: true
-        beforeInstallAction: "echo '[PRE] Renewing Tomcat keystore' >> /var/log/vcert.log"
         afterInstallAction: "systemctl restart tomcat"
