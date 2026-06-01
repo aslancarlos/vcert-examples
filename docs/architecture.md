@@ -131,9 +131,9 @@ A one-off CLI action (not part of the playbook). Details in [`revocation.md`](re
 ```mermaid
 flowchart LR
     A[vcert revoke] --> B{Selector}
-    B -- --id DN --> C[CyberArk Certificate Manager]
-    B -- --thumbprint SHA1 --> C
-    C --> D{--no-retire?}
-    D -- yes --> E([Revoked, object<br/>re-enrollable])
-    D -- no --> F([Revoked + retired])
+    B -->|"by --id (DN)"| C[CyberArk Certificate Manager]
+    B -->|"by --thumbprint (SHA1)"| C
+    C --> D{"--no-retire?"}
+    D -->|yes| E([Revoked, object<br/>re-enrollable])
+    D -->|no| F([Revoked + retired])
 ```
