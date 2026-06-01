@@ -131,6 +131,7 @@ vcert-examples/
 │   ├── playbook-reference.md      # referência dos campos do playbook
 │   ├── architecture.md            # diagramas de fluxo e por serviço
 │   ├── windows-iis.md             # guia Windows / IIS (CAPI + bind)
+│   ├── revocation.md              # revogação de certificados
 │   └── best-practices.md          # boas práticas detalhadas
 ├── playbooks/
 │   ├── tpp-selfhosted.yaml        # exemplo completo Self-Hosted (TPP)
@@ -138,8 +139,11 @@ vcert-examples/
 │   ├── multi-format.yaml          # PEM + PKCS12 + JKS no mesmo certificado
 │   ├── haproxy.yaml               # HAProxy
 │   ├── apache.yaml                # Apache (httpd)
+│   ├── nginx.yaml                 # Nginx
 │   ├── tomcat.yaml                # Tomcat (PKCS#12)
-│   └── windows-iis.yaml           # Windows / IIS (CAPI)
+│   ├── windows-iis.yaml           # Windows / IIS (CAPI)
+│   ├── azure-appgw.yaml           # Azure Application Gateway
+│   └── aws-acm.yaml               # AWS ALB/NLB (ACM)
 ├── systemd/
 │   ├── vcert.service              # unit de serviço (oneshot)
 │   └── vcert.timer                # timer para renovação periódica
@@ -150,8 +154,12 @@ vcert-examples/
     ├── post-renew.sh              # hook pós-renovação (genérico)
     ├── post-renew-haproxy.sh      # hook pós-renovação para HAProxy
     ├── post-renew-apache.sh       # hook pós-renovação para Apache
+    ├── post-renew-nginx.sh        # hook pós-renovação para Nginx
     ├── post-renew-tomcat.sh       # hook pós-renovação para Tomcat
-    └── post-renew-iis.ps1         # hook pós-renovação para Windows/IIS
+    ├── post-renew-iis.ps1         # hook pós-renovação para Windows/IIS
+    ├── post-renew-azure-appgw.sh  # hook pós-renovação para Azure App Gateway
+    ├── post-renew-aws-acm.sh      # hook pós-renovação para AWS ACM
+    └── revoke.sh                  # wrapper para vcert revoke
 ```
 
 ---
@@ -165,8 +173,12 @@ vcert-examples/
 | [`playbooks/multi-format.yaml`](playbooks/multi-format.yaml) | Mesma emissão gravada em PEM, PKCS#12 e JKS para apps diferentes. |
 | [`playbooks/haproxy.yaml`](playbooks/haproxy.yaml) | **HAProxy** — gera PEM único (cert+chain+key) e faz `reload`. |
 | [`playbooks/apache.yaml`](playbooks/apache.yaml) | **Apache (httpd)** — PEM separados e `graceful reload`. |
+| [`playbooks/nginx.yaml`](playbooks/nginx.yaml) | **Nginx** — monta fullchain (cert+chain) e faz `reload`. |
 | [`playbooks/tomcat.yaml`](playbooks/tomcat.yaml) | **Tomcat** — keystore PKCS#12 e `restart`. |
 | [`playbooks/windows-iis.yaml`](playbooks/windows-iis.yaml) | **Windows / IIS** — store CAPI + bind automático no IIS via PowerShell. |
+| [`playbooks/azure-appgw.yaml`](playbooks/azure-appgw.yaml) | **Azure Application Gateway** — emite .pfx e envia via Azure CLI. |
+| [`playbooks/aws-acm.yaml`](playbooks/aws-acm.yaml) | **AWS ALB/NLB** — importa no ACM (reusa o ARN) via AWS CLI. |
+| [`docs/revocation.md`](docs/revocation.md) | **Revogação** de certificados (`vcert revoke`) + `scripts/revoke.sh`. |
 | [`systemd/`](systemd/) | Renovação agendada via systemd timer (Linux). |
 | [`cron/`](cron/) | Renovação agendada via cron (Linux). |
 | [`scripts/`](scripts/) | Scripts de hook de pré e pós renovação (Linux `.sh` e Windows `.ps1`). |
@@ -180,6 +192,7 @@ vcert-examples/
 - [Referência do playbook](docs/playbook-reference.md)
 - [Arquitetura e diagramas](docs/architecture.md)
 - [Windows / IIS](docs/windows-iis.md)
+- [Revogação](docs/revocation.md)
 - [Boas práticas](docs/best-practices.md)
 
 ---

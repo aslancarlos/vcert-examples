@@ -1,0 +1,56 @@
+# =============================================================================
+# VCERT PLAYBOOK - Azure Application Gateway
+# =============================================================================
+# O Application Gateway nao le arquivos locais: o certificado precisa ser
+# enviado para o gateway (ou para um Key Vault referenciado por ele).
+#
+# Estrategia: o vcert emite um PKCS#12 (.pfx) localmente e o post-renew envia
+# para o Application Gateway via Azure CLI (az). A maquina precisa ter o `az`
+# autenticado (az login / managed identity) com permissao no recurso.
+#
+# Executar:
+#   export VCERT_TOKEN="seu_access_token"
+#   export VCERT_P12_PASS="senha_forte_do_pfx"
+#   export AZ_RESOURCE_GROUP="rg-rede"
+#   export AZ_APPGW_NAME="appgw-prod"
+#   export AZ_CERT_NAME="cert-www"
+#   vcert run -f playbooks/azure-appgw.yaml
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+
+certificateTasks:
+  - name: certificado-azure-appgw
+
+    renewBefore: 30d
+
+    request:
+      csr: local
+      subject:
+        commonName: "www.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU
+          - "Cloud"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+      keyType: rsa
+      keySize: 2048
+      sanDNS:
+        - "www.suaempresa.com.br"
+      validDays: 90
+      zone: "Certificates\\Producao\\Azure"
+
+    installations:
+      - format: PKCS12
+        file: "/etc/vcert/azure/www.pfx"
+        password: "{{ Env \"VCERT_P12_PASS\" }}"
+        backupFiles: true
+
+        # POS: envia o .pfx para o Application Gateway via Azure CLI.
+        afterInstallAction: "/usr/local/bin/post-renew-azure-appgw.sh"

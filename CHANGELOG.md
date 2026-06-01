@@ -13,6 +13,10 @@ e este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 - `docs/architecture.md` com diagramas Mermaid (fluxo, componentes e por serviço).
 - Diagrama de fluxo no `README.md`.
 - Suporte a **Windows / IIS**: `playbooks/windows-iis.yaml` (store CAPI), `scripts/post-renew-iis.ps1` (bind no IIS), `docs/windows-iis.md` (guia + Task Scheduler) e diagrama IIS.
+- Playbook e hook para **Nginx**: `playbooks/nginx.yaml`, `scripts/post-renew-nginx.sh`.
+- Balanceadores em nuvem: `playbooks/azure-appgw.yaml` + `scripts/post-renew-azure-appgw.sh` (Azure Application Gateway via Azure CLI) e `playbooks/aws-acm.yaml` + `scripts/post-renew-aws-acm.sh` (AWS ALB/NLB via ACM).
+- **Revogação**: `docs/revocation.md` e `scripts/revoke.sh` (wrapper de `vcert revoke`).
+- Diagramas Mermaid para Nginx, Azure App Gateway, AWS ACM e revogação em `docs/architecture.md`.
 
 ## [1.0.0] - 2026-06-01
 

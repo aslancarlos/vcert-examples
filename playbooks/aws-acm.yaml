@@ -1,0 +1,59 @@
+# =============================================================================
+# VCERT PLAYBOOK - AWS ALB / NLB (via ACM - AWS Certificate Manager)
+# =============================================================================
+# Os Load Balancers da AWS (Application e Network) usam certificados do ACM,
+# referenciados por ARN no listener HTTPS/TLS. Reimportar para o MESMO ARN
+# atualiza o certificado sem precisar mexer no listener.
+#
+# Estrategia: o vcert emite o PEM (cert, chain, key) e o post-renew faz
+# `aws acm import-certificate` reusando o ARN existente. A maquina precisa do
+# AWS CLI autenticado (perfil/instance role) com permissao no ACM.
+#
+# Executar:
+#   export VCERT_TOKEN="seu_access_token"
+#   export AWS_REGION="sa-east-1"
+#   export ACM_CERT_ARN="arn:aws:acm:sa-east-1:123456789012:certificate/xxxxxxxx"
+#   vcert run -f playbooks/aws-acm.yaml
+#
+# Primeira vez (sem ARN): deixe ACM_CERT_ARN vazio; o script importa e loga o
+# novo ARN para voce associar ao listener e gravar na variavel depois.
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+
+certificateTasks:
+  - name: certificado-aws-acm
+
+    renewBefore: 30d
+
+    request:
+      csr: local
+      subject:
+        commonName: "www.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU
+          - "Cloud"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+      keyType: rsa
+      keySize: 2048
+      sanDNS:
+        - "www.suaempresa.com.br"
+      validDays: 90
+      zone: "Certificates\\Producao\\AWS"
+
+    installations:
+      - format: PEM
+        file: "/etc/vcert/aws/www.crt"
+        chainFile: "/etc/vcert/aws/www.chain.crt"
+        keyFile: "/etc/vcert/aws/www.key"
+        backupFiles: true
+
+        # POS: importa/reimporta o certificado no ACM (reusa o ARN se existir).
+        afterInstallAction: "/usr/local/bin/post-renew-aws-acm.sh"

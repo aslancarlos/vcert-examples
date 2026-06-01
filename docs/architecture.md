@@ -86,3 +86,53 @@ flowchart LR
     N --> A
     A --> OK([Site IIS com<br/>certificado novo])
 ```
+
+### Nginx
+Usa **fullchain** (cert+chain) em um arquivo e a chave em outro. O `post-renew-nginx.sh` monta o fullchain, valida (`nginx -t`) e faz `reload`.
+
+```mermaid
+flowchart LR
+    V[vcert: www.crt / www.chain.crt / www.key] --> S[post-renew-nginx.sh<br/>cat cert+chain &gt; fullchain]
+    S --> C{nginx -t?}
+    C -- ok --> R[systemctl reload nginx]
+    C -- erro --> X[aborta / mantem anterior]
+```
+
+### Azure Application Gateway
+O gateway não lê arquivos locais. O `vcert` emite um **.pfx** e o `post-renew-azure-appgw.sh` envia via **Azure CLI** (`az ... ssl-cert update`).
+
+```mermaid
+flowchart LR
+    V[vcert: www.pfx] --> S[post-renew-azure-appgw.sh]
+    S --> Q{ssl-cert existe?}
+    Q -- sim --> U[az ... ssl-cert update]
+    Q -- nao --> C[az ... ssl-cert create]
+    U --> GW([Application Gateway<br/>com cert novo])
+    C --> GW
+```
+
+### AWS ALB / NLB (ACM)
+Os LBs da AWS usam certificados do **ACM** por ARN. O `post-renew-aws-acm.sh` faz `import-certificate` reusando o mesmo **ARN** — o listener pega o novo automaticamente.
+
+```mermaid
+flowchart LR
+    V[vcert: www.crt / www.chain.crt / www.key] --> S[post-renew-aws-acm.sh]
+    S --> Q{ACM_CERT_ARN<br/>definido?}
+    Q -- sim --> R[aws acm import-certificate<br/>--certificate-arn ARN]
+    Q -- nao --> N[import novo + loga ARN]
+    R --> LB([ALB/NLB listener<br/>com cert novo])
+```
+
+## Revogação
+
+Ação pontual via CLI (não é parte do playbook). Detalhes em [`revocation.md`](revocation.md).
+
+```mermaid
+flowchart LR
+    A[vcert revoke] --> B{Seletor}
+    B -- --id DN --> C[CyberArk Certificate Manager]
+    B -- --thumbprint SHA1 --> C
+    C --> D{--no-retire?}
+    D -- sim --> E([Revogado, objeto<br/>reemitivel])
+    D -- nao --> F([Revogado + desabilitado])
+```
