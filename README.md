@@ -228,4 +228,4 @@ Contribuições são bem-vindas! Leia [`CONTRIBUTING.md`](CONTRIBUTING.md) antes
 
 Distribuído sob a licença **MIT**. Veja [`LICENSE`](LICENSE).
 
-> Este projeto é **não-oficial** e não é mantido pela CyberArk/Venafi. "VCERT", "Venafi" e "CyberArk" são marcas de seus respectivos donos.
+> Este projeto é **não-oficial** e não é mantido pela CyberArk/Palo Alto Networks. "VCERT", "CyberArk" e "Palo Alto Networks" são marcas de seus respectivos donos.
