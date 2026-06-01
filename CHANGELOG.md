@@ -12,6 +12,7 @@ e este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 - Scripts de pós-renovação por serviço: `scripts/post-renew-haproxy.sh`, `post-renew-apache.sh`, `post-renew-tomcat.sh`.
 - `docs/architecture.md` com diagramas Mermaid (fluxo, componentes e por serviço).
 - Diagrama de fluxo no `README.md`.
+- Suporte a **Windows / IIS**: `playbooks/windows-iis.yaml` (store CAPI), `scripts/post-renew-iis.ps1` (bind no IIS), `docs/windows-iis.md` (guia + Task Scheduler) e diagrama IIS.
 
 ## [1.0.0] - 2026-06-01
 

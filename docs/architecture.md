@@ -72,3 +72,17 @@ flowchart LR
     C -- sim --> OK[ok]
     C -- nao --> X[erro / alerta]
 ```
+
+### Windows / IIS
+Instala no **Windows Certificate Store (CAPI)**; o `post-renew-iis.ps1` (PowerShell) faz o **bind** do novo thumbprint no site do IIS — sem reiniciar o serviço.
+
+```mermaid
+flowchart LR
+    V[vcert: format CAPI<br/>LocalMachine\My] --> P[post-renew-iis.ps1]
+    P --> T[Acha cert pelo<br/>FriendlyName mais novo]
+    T --> B{Binding HTTPS<br/>existe?}
+    B -- nao --> N[New-WebBinding<br/>SNI se host header]
+    B -- sim --> A[AddSslCertificate thumbprint]
+    N --> A
+    A --> OK([Site IIS com<br/>certificado novo])
+```

@@ -58,7 +58,7 @@ Mais diagramas (componentes e por serviço) em [`docs/architecture.md`](docs/arc
 
 ## Pré-requisitos
 
-- Linux (testado em distribuições baseadas em Debian/Ubuntu e RHEL/Rocky).
+- Linux (Debian/Ubuntu e RHEL/Rocky) **ou Windows Server** (para IIS — veja [`docs/windows-iis.md`](docs/windows-iis.md)).
 - Binário do `vcert` ([releases](https://github.com/Venafi/vcert/releases)).
 - Acesso ao CyberArk Certificate Manager:
   - **Self-Hosted (TPP):** URL do vedsdk + `access token` (ou credenciais para gerá-lo).
@@ -130,6 +130,7 @@ vcert-examples/
 │   ├── authentication.md          # autenticação (TPP token / SaaS API key)
 │   ├── playbook-reference.md      # referência dos campos do playbook
 │   ├── architecture.md            # diagramas de fluxo e por serviço
+│   ├── windows-iis.md             # guia Windows / IIS (CAPI + bind)
 │   └── best-practices.md          # boas práticas detalhadas
 ├── playbooks/
 │   ├── tpp-selfhosted.yaml        # exemplo completo Self-Hosted (TPP)
@@ -137,7 +138,8 @@ vcert-examples/
 │   ├── multi-format.yaml          # PEM + PKCS12 + JKS no mesmo certificado
 │   ├── haproxy.yaml               # HAProxy
 │   ├── apache.yaml                # Apache (httpd)
-│   └── tomcat.yaml                # Tomcat (PKCS#12)
+│   ├── tomcat.yaml                # Tomcat (PKCS#12)
+│   └── windows-iis.yaml           # Windows / IIS (CAPI)
 ├── systemd/
 │   ├── vcert.service              # unit de serviço (oneshot)
 │   └── vcert.timer                # timer para renovação periódica
@@ -148,7 +150,8 @@ vcert-examples/
     ├── post-renew.sh              # hook pós-renovação (genérico)
     ├── post-renew-haproxy.sh      # hook pós-renovação para HAProxy
     ├── post-renew-apache.sh       # hook pós-renovação para Apache
-    └── post-renew-tomcat.sh       # hook pós-renovação para Tomcat
+    ├── post-renew-tomcat.sh       # hook pós-renovação para Tomcat
+    └── post-renew-iis.ps1         # hook pós-renovação para Windows/IIS
 ```
 
 ---
@@ -163,9 +166,10 @@ vcert-examples/
 | [`playbooks/haproxy.yaml`](playbooks/haproxy.yaml) | **HAProxy** — gera PEM único (cert+chain+key) e faz `reload`. |
 | [`playbooks/apache.yaml`](playbooks/apache.yaml) | **Apache (httpd)** — PEM separados e `graceful reload`. |
 | [`playbooks/tomcat.yaml`](playbooks/tomcat.yaml) | **Tomcat** — keystore PKCS#12 e `restart`. |
-| [`systemd/`](systemd/) | Renovação agendada via systemd timer. |
-| [`cron/`](cron/) | Renovação agendada via cron. |
-| [`scripts/`](scripts/) | Scripts de hook de pré e pós renovação (genéricos e por serviço). |
+| [`playbooks/windows-iis.yaml`](playbooks/windows-iis.yaml) | **Windows / IIS** — store CAPI + bind automático no IIS via PowerShell. |
+| [`systemd/`](systemd/) | Renovação agendada via systemd timer (Linux). |
+| [`cron/`](cron/) | Renovação agendada via cron (Linux). |
+| [`scripts/`](scripts/) | Scripts de hook de pré e pós renovação (Linux `.sh` e Windows `.ps1`). |
 
 ---
 
@@ -175,6 +179,7 @@ vcert-examples/
 - [Autenticação](docs/authentication.md)
 - [Referência do playbook](docs/playbook-reference.md)
 - [Arquitetura e diagramas](docs/architecture.md)
+- [Windows / IIS](docs/windows-iis.md)
 - [Boas práticas](docs/best-practices.md)
 
 ---
