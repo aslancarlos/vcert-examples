@@ -1,0 +1,20 @@
+# Changelog
+
+Todas as mudanças relevantes deste projeto são documentadas aqui.
+
+O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
+e este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
+
+## [Unreleased]
+
+## [1.0.0] - 2026-06-01
+
+### Adicionado
+- Estrutura inicial do repositório.
+- Playbook de exemplo para CyberArk Certificate Manager Self-Hosted (TPP): `playbooks/tpp-selfhosted.yaml`.
+- Playbook de exemplo para SaaS (VaaS): `playbooks/saas-vaas.yaml`.
+- Playbook multi-formato (PEM + PKCS12 + JKS): `playbooks/multi-format.yaml`.
+- Documentação: instalação, autenticação, referência do playbook e boas práticas.
+- Exemplos de agendamento via cron e systemd timer.
+- Scripts de hook de pré e pós renovação.
+- `LICENSE` (MIT), `SECURITY.md`, `CONTRIBUTING.md`, `.gitignore`.

@@ -1,0 +1,23 @@
+# =============================================================================
+# systemd timer - dispara o vcert.service periodicamente
+# Instalar em: /etc/systemd/system/vcert.timer
+#
+# Habilitar:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now vcert.timer
+#   systemctl list-timers vcert.timer
+# =============================================================================
+[Unit]
+Description=Agenda a renovacao de certificados via VCERT
+Documentation=https://github.com/Venafi/vcert
+
+[Timer]
+# Roda duas vezes ao dia. O vcert so renova quando estiver dentro do renewBefore.
+OnCalendar=*-*-* 06,18:00:00
+# Se o sistema estava desligado na hora, roda assim que ligar.
+Persistent=true
+# Espalha a execucao em ate 30min para evitar pico simultaneo em frotas grandes.
+RandomizedDelaySec=1800
+
+[Install]
+WantedBy=timers.target

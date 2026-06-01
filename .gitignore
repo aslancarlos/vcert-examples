@@ -1,0 +1,42 @@
+# =============================================================================
+# Segredos e credenciais - NUNCA versionar
+# =============================================================================
+*.token
+*token*
+*.apikey
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.csr
+.env
+.env.*
+secrets.*
+credentials.*
+vcert-config.ini
+
+# Permitir exemplos explicitamente marcados como .example
+!*.example
+
+# =============================================================================
+# Artefatos do vcert
+# =============================================================================
+vcert
+vcert.exe
+vcert.zip
+*.log
+
+# =============================================================================
+# Sistema operacional / editores
+# =============================================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*~
+.idea/
+.vscode/

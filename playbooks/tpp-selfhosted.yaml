@@ -1,0 +1,79 @@
+# =============================================================================
+# VCERT PLAYBOOK - CyberArk Certificate Manager Self-Hosted (antigo TPP)
+# =============================================================================
+# Solicita/renova um certificado, gera o CSR localmente no Linux com os dados
+# informados, instala os arquivos e executa acoes de PRE e POS na renovacao.
+#
+# Executar:
+#   export VCERT_TOKEN="seu_access_token"
+#   vcert run -f playbooks/tpp-selfhosted.yaml
+#
+# Validar sem aplicar:   vcert run -f playbooks/tpp-selfhosted.yaml --validate
+# Forcar renovacao:      vcert run -f playbooks/tpp-selfhosted.yaml --force-renew
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      # Gere o token:
+      #   vcert getcred --username SEU_USER --password 'SENHA' \
+      #     -u https://tpp.suaempresa.com.br/vedsdk --client-id vcert-cli
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+      # trustBundle: "/etc/ssl/certs/cyberark-chain.pem"  # CA interna, se necessario
+
+certificateTasks:
+  - name: certificado-app-web
+
+    # === PRAZO PARA INICIAR A RENOVACAO ===
+    # Renova quando faltar este tempo para o vencimento. Aceita "30d", "720h" ou "10%".
+    renewBefore: 30d
+
+    request:
+      # csr: local  -> gera CSR e chave privada na propria maquina (recomendado)
+      # csr: service -> a plataforma gera a chave
+      csr: local
+
+      # === DADOS DO CSR (Subject / DN) ===
+      subject:
+        commonName: "app.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU (pode haver varias)
+          - "Tecnologia da Informacao"
+          - "Seguranca"
+        locality: "Sao Paulo"                        # L
+        province: "SP"                               # ST
+        country: "BR"                                # C
+
+      # === ALGORITMO E TAMANHO DE CHAVE ===
+      keyType: rsa
+      keySize: 2048          # 2048 / 3072 / 4096
+      # Alternativa ECDSA (substitua as duas linhas acima):
+      # keyType: ecdsa
+      # keyCurve: P256       # P256 / P384 / P521
+
+      # === SANs ===
+      sanDNS:
+        - "app.suaempresa.com.br"
+        - "www.app.suaempresa.com.br"
+
+      # === PERIODO DE VALIDADE (dias) ===
+      validDays: 90
+      # issuerHint: DIGICERT   # use se a CA exigir ao definir validade custom
+
+      # === POLITICA / ZONE ===
+      zone: "Certificates\\Producao\\AppWeb"
+
+    installations:
+      - format: PEM
+        file: "/etc/ssl/app/app.crt"
+        chainFile: "/etc/ssl/app/chain.crt"
+        keyFile: "/etc/ssl/app/app.key"
+        backupFiles: true
+
+        # === ACAO PRE-RENOVACAO === (antes de instalar o certificado novo)
+        beforeInstallAction: "/usr/local/bin/pre-renew.sh"
+
+        # === ACAO POS-RENOVACAO === (depois de instalar; recarrega o servico)
+        afterInstallAction: "/usr/local/bin/post-renew.sh"

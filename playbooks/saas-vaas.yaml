@@ -1,0 +1,52 @@
+# =============================================================================
+# VCERT PLAYBOOK - CyberArk Certificate Manager SaaS (antigo Venafi as a Service)
+# =============================================================================
+# Executar:
+#   export VCERT_APIKEY="sua_api_key"
+#   vcert run -f playbooks/saas-vaas.yaml
+# =============================================================================
+
+config:
+  connection:
+    platform: vaas
+    url: "https://api.venafi.cloud"   # ajuste se sua regiao for diferente (ex.: api.eu.venafi.cloud)
+    credentials:
+      apiKey: "{{ Env \"VCERT_APIKEY\" }}"
+
+certificateTasks:
+  - name: certificado-app-saas
+
+    # Prazo para iniciar a renovacao
+    renewBefore: 30d
+
+    request:
+      csr: local
+
+      subject:
+        commonName: "api.suaempresa.com.br"
+        organization: "Sua Empresa S.A."            # O
+        organizationalUnits:                         # OU
+          - "Plataforma"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+
+      keyType: rsa
+      keySize: 2048
+
+      sanDNS:
+        - "api.suaempresa.com.br"
+
+      validDays: 90
+
+      # No SaaS, a "zone" e o par Application\IssuingTemplate (alias da equipe).
+      zone: "MinhaApp\\Default"
+
+    installations:
+      - format: PEM
+        file: "/etc/ssl/api/api.crt"
+        chainFile: "/etc/ssl/api/chain.crt"
+        keyFile: "/etc/ssl/api/api.key"
+        backupFiles: true
+        beforeInstallAction: "/usr/local/bin/pre-renew.sh"
+        afterInstallAction: "/usr/local/bin/post-renew.sh"

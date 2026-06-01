@@ -1,0 +1,64 @@
+# =============================================================================
+# VCERT PLAYBOOK - Mesma emissao em multiplos formatos (PEM + PKCS12 + JKS)
+# =============================================================================
+# Util quando o mesmo certificado precisa atender servicos diferentes:
+#   - PEM    -> nginx / Apache / HAProxy
+#   - PKCS12 -> apps .NET / Windows / alguns load balancers
+#   - JKS    -> Java / Tomcat
+#
+# Cada instalacao tem suas proprias acoes de pre/pos.
+# =============================================================================
+
+config:
+  connection:
+    platform: tpp
+    url: "https://tpp.suaempresa.com.br/vedsdk"
+    credentials:
+      accessToken: "{{ Env \"VCERT_TOKEN\" }}"
+
+certificateTasks:
+  - name: certificado-multiservico
+
+    renewBefore: 30d
+
+    request:
+      csr: local
+      subject:
+        commonName: "svc.suaempresa.com.br"
+        organization: "Sua Empresa S.A."
+        organizationalUnits:
+          - "Infraestrutura"
+        locality: "Sao Paulo"
+        province: "SP"
+        country: "BR"
+      keyType: rsa
+      keySize: 3072
+      sanDNS:
+        - "svc.suaempresa.com.br"
+      validDays: 365
+      zone: "Certificates\\Producao\\Servicos"
+
+    installations:
+      # ---- 1) PEM para nginx ----
+      - format: PEM
+        file: "/etc/ssl/svc/svc.crt"
+        chainFile: "/etc/ssl/svc/chain.crt"
+        keyFile: "/etc/ssl/svc/svc.key"
+        backupFiles: true
+        afterInstallAction: "systemctl reload nginx"
+
+      # ---- 2) PKCS#12 para app .NET ----
+      - format: PKCS12
+        file: "/etc/ssl/svc/svc.p12"
+        password: "{{ Env \"VCERT_P12_PASS\" }}"
+        backupFiles: true
+        afterInstallAction: "systemctl restart minha-app-dotnet"
+
+      # ---- 3) JKS para Tomcat ----
+      - format: JKS
+        file: "/etc/ssl/svc/svc.jks"
+        jksAlias: "svc"
+        jksPassword: "{{ Env \"VCERT_JKS_PASS\" }}"
+        backupFiles: true
+        beforeInstallAction: "echo '[PRE] Renovando keystore Tomcat' >> /var/log/vcert.log"
+        afterInstallAction: "systemctl restart tomcat"
