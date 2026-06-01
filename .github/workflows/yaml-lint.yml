@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validar sintaxe YAML dos playbooks
+      - name: Validate playbook YAML syntax
         run: |
           python3 - <<'PY'
           import sys, glob

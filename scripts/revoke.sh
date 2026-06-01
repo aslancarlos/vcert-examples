@@ -1,35 +1,35 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Revogacao de certificado - VCERT (CyberArk Certificate Manager Self-Hosted/TPP)
+# Certificate revocation - VCERT (CyberArk Certificate Manager Self-Hosted/TPP)
 # =============================================================================
-# Wrapper para `vcert revoke`. A revogacao NAO faz parte do playbook; e uma
-# acao pontual via CLI. Disponivel no Self-Hosted (TPP).
+# Wrapper for `vcert revoke`. Revocation is NOT part of the playbook; it is a
+# one-off CLI action. Available on Self-Hosted (TPP).
 #
-# Uso:
-#   export VCERT_TOKEN="seu_access_token"
-#   ./revoke.sh --id '\VED\Policy\Producao\AppWeb\www.suaempresa.com.br' superseded
+# Usage:
+#   export VCERT_TOKEN="your_access_token"
+#   ./revoke.sh --id '\VED\Policy\Production\AppWeb\www.yourcompany.com' superseded
 #   ./revoke.sh --thumbprint 0123ABCD... key-compromise
 #
-# Razoes validas: none | key-compromise | ca-compromise |
-#                 affiliation-changed | superseded | cessation-of-operation
+# Valid reasons: none | key-compromise | ca-compromise |
+#                affiliation-changed | superseded | cessation-of-operation
 # =============================================================================
 set -euo pipefail
 
-URL="https://tpp.suaempresa.com.br/vedsdk"
-SELECTOR="${1:-}"      # --id ou --thumbprint
+URL="https://tpp.yourcompany.com/vedsdk"
+SELECTOR="${1:-}"      # --id or --thumbprint
 VALUE="${2:-}"
 REASON="${3:-superseded}"
 
-: "${VCERT_TOKEN:?defina VCERT_TOKEN}"
+: "${VCERT_TOKEN:?set VCERT_TOKEN}"
 
 if [[ "$SELECTOR" != "--id" && "$SELECTOR" != "--thumbprint" ]] || [[ -z "$VALUE" ]]; then
-  echo "Uso: $0 --id <CertificateDN> | --thumbprint <SHA1> [reason]" >&2
+  echo "Usage: $0 --id <CertificateDN> | --thumbprint <SHA1> [reason]" >&2
   exit 2
 fi
 
-echo "Revogando certificado ($SELECTOR) com razao '$REASON'..."
+echo "Revoking certificate ($SELECTOR) with reason '$REASON'..."
 
-# Remova --no-retire se quiser que o objeto seja desabilitado (sem reemissao).
+# Remove --no-retire if you want the object to be disabled (no re-enrollment).
 vcert revoke \
   -u "$URL" \
   -t "$VCERT_TOKEN" \
@@ -37,4 +37,4 @@ vcert revoke \
   --reason "$REASON" \
   --no-retire
 
-echo "Revogacao solicitada."
+echo "Revocation requested."

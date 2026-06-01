@@ -1,56 +1,56 @@
-# Boas Práticas
+# Best Practices
 
-Recomendações para usar o VCERT com o CyberArk Certificate Manager de forma segura e confiável em produção.
+Recommendations for using VCERT with the CyberArk Certificate Manager safely and reliably in production.
 
-## 1. Segredos
+## 1. Secrets
 
-- **Nunca** versione tokens, API keys, senhas ou chaves privadas.
-- Injete segredos via `{{ Env "VCERT_TOKEN" }}` lendo de variável de ambiente, e forneça essa variável a partir de um **cofre** (CyberArk Conjur, Vault) ou de um arquivo protegido (`chmod 600`, dono root).
-- Rotacione tokens periodicamente e revogue imediatamente qualquer segredo exposto.
-- Revise `git status`/`git diff` antes de cada commit. O `.gitignore` já bloqueia os padrões comuns.
+- **Never** version tokens, API keys, passwords, or private keys.
+- Inject secrets via `{{ Env "VCERT_TOKEN" }}` reading from an environment variable, and provide that variable from a **vault** (CyberArk Conjur, Vault) or a protected file (`chmod 600`, owned by root).
+- Rotate tokens periodically and immediately revoke any exposed secret.
+- Review `git status`/`git diff` before each commit. The `.gitignore` already blocks common patterns.
 
-## 2. Chave privada
+## 2. Private key
 
-- Prefira **`csr: local`** para que a chave privada seja gerada e permaneça apenas na máquina.
-- Restrinja permissões: `chmod 600` no `keyFile`, dono igual ao usuário do serviço.
-- Gere **chave nova a cada renovação** (comportamento padrão do `csr: local`) em vez de reutilizar a mesma chave por anos.
+- Prefer **`csr: local`** so the private key is generated and stays only on the machine.
+- Restrict permissions: `chmod 600` on the `keyFile`, owned by the service user.
+- Generate a **new key on every renewal** (default behavior of `csr: local`) instead of reusing the same key for years.
 
-## 3. Algoritmo e tamanho de chave
+## 3. Algorithm and key size
 
-- RSA mínimo recomendado: **2048 bits** (use 3072/4096 para requisitos mais rígidos).
-- ECDSA (`P256`/`P384`) oferece chaves menores e melhor performance — use se a sua stack e a CA suportarem.
-- Centralize o padrão na **política/zone** do servidor para manter consistência na frota.
+- Recommended RSA minimum: **2048 bits** (use 3072/4096 for stricter requirements).
+- ECDSA (`P256`/`P384`) offers smaller keys and better performance — use it if your stack and CA support it.
+- Centralize the standard in the server-side **policy/zone** to keep the fleet consistent.
 
-## 4. Validade e renovação
+## 4. Validity and renewal
 
-- Defina `renewBefore` com **folga** (ex.: `30d`). Certificados curtos (90 dias) exigem janelas e automação confiáveis.
-- Rode a automação **com frequência** (a cada 6–12h via cron ou systemd timer). O VCERT só renova dentro da janela, então rodar com frequência é seguro.
-- Em frotas grandes, use `RandomizedDelaySec` (systemd) para evitar pico simultâneo de requisições na CA.
+- Set `renewBefore` with **margin** (e.g., `30d`). Short certificates (90 days) require reliable windows and automation.
+- Run the automation **frequently** (every 6–12h via cron or systemd timer). VCERT only renews within the window, so running frequently is safe.
+- On large fleets, use `RandomizedDelaySec` (systemd) to avoid a simultaneous spike of requests to the CA.
 
-## 5. Hooks de pré e pós renovação
+## 5. Pre and post renewal hooks
 
-- **Pré (`beforeInstallAction`)**: prepare o ambiente (manutenção, snapshot). Use `|| true` em comandos que podem falhar sem comprometer a renovação.
-- **Pós (`afterInstallAction`)**: garanta que o serviço **leia o certificado novo**. Prefira `reload` a `restart` quando possível (sem downtime) e **teste a config antes** (ex.: `nginx -t && systemctl reload nginx`).
-- Mantenha os hooks **idempotentes** e com **log** (registre início/fim em `/var/log/vcert.log`).
-- Teste a renovação ponta a ponta com `--force-renew` em um ambiente de homologação.
+- **Pre (`beforeInstallAction`)**: prepare the environment (maintenance mode, snapshot). Use `|| true` on commands that may fail without compromising the renewal.
+- **Post (`afterInstallAction`)**: make sure the service **reads the new certificate**. Prefer `reload` over `restart` when possible (no downtime) and **test the config first** (e.g., `nginx -t && systemctl reload nginx`).
+- Keep hooks **idempotent** and with **logging** (record start/end in `/var/log/vcert.log`).
+- Test the renewal end to end with `--force-renew` in a staging environment.
 
-## 6. Segurança operacional
+## 6. Operational security
 
-- Habilite `backupFiles: true` para reverter rapidamente em caso de problema.
-- Monitore o `vcert.log` e alerte sobre falhas de renovação.
-- Tenha alerta independente de **expiração** (ex.: blackbox/monitoramento externo) — não confie só na automação.
-- Documente qual zone/política cada host usa.
+- Enable `backupFiles: true` to roll back quickly if something goes wrong.
+- Monitor `vcert.log` and alert on renewal failures.
+- Have independent **expiration** alerting (e.g., blackbox/external monitoring) — don't rely on automation alone.
+- Document which zone/policy each host uses.
 
-## 7. Validação antes de aplicar
+## 7. Validate before applying
 
 ```bash
-vcert run -f playbooks/seu-playbook.yaml --validate
+vcert run -f playbooks/your-playbook.yaml --validate
 ```
 
-Use sempre antes de promover mudanças para produção.
+Always use it before promoting changes to production.
 
-## 8. Versionamento
+## 8. Versioning
 
-- Versione os **playbooks** (sem segredos) num repositório como este.
-- Use o `CHANGELOG.md` para registrar mudanças relevantes.
-- Faça revisão por PR antes de alterar playbooks de produção.
+- Version the **playbooks** (without secrets) in a repository like this one.
+- Use `CHANGELOG.md` to record notable changes.
+- Review via PR before changing production playbooks.

@@ -1,20 +1,20 @@
 # =============================================================================
-# systemd service (oneshot) para rodar o playbook do vcert
-# Instalar em: /etc/systemd/system/vcert.service
+# systemd service (oneshot) to run the VCERT playbook
+# Install at: /etc/systemd/system/vcert.service
 # =============================================================================
 [Unit]
-Description=VCERT - renovacao de certificados (CyberArk Certificate Manager)
+Description=VCERT - certificate renewal (CyberArk Certificate Manager)
 Documentation=https://github.com/Venafi/vcert
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-# O token e lido do arquivo de ambiente (chmod 600, dono root).
-# Crie /etc/vcert/vcert.env com:  VCERT_TOKEN=seu_access_token
+# The token is read from the environment file (chmod 600, owned by root).
+# Create /etc/vcert/vcert.env with:  VCERT_TOKEN=your_access_token
 EnvironmentFile=/etc/vcert/vcert.env
 ExecStart=/usr/local/bin/vcert run -f /etc/vcert/playbook.yaml
-# Endurecimento basico
+# Basic hardening
 User=root
 ProtectSystem=full
 NoNewPrivileges=true

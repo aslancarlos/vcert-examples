@@ -1,47 +1,47 @@
 # =============================================================================
 # VCERT PLAYBOOK - Nginx
 # =============================================================================
-# O Nginx usa duas diretivas:
-#   ssl_certificate      -> certificado + cadeia (fullchain) no MESMO arquivo
-#   ssl_certificate_key  -> chave privada (arquivo separado)
+# Nginx uses two directives:
+#   ssl_certificate      -> certificate + chain (fullchain) in the SAME file
+#   ssl_certificate_key  -> private key (separate file)
 #
-# O vcert grava cert, chain e key separados. O post-renew-nginx.sh monta o
-# fullchain (cert + chain) e faz reload sem downtime apos validar a config.
+# VCERT writes cert, chain, and key separately. post-renew-nginx.sh builds the
+# fullchain (cert + chain) and reloads without downtime after validating the config.
 #
-# Executar:
-#   export VCERT_TOKEN="seu_access_token"
+# Run:
+#   export VCERT_TOKEN="your_access_token"
 #   vcert run -f playbooks/nginx.yaml
 # =============================================================================
 
 config:
   connection:
     platform: tpp
-    url: "https://tpp.suaempresa.com.br/vedsdk"
+    url: "https://tpp.yourcompany.com/vedsdk"
     credentials:
       accessToken: "{{ Env \"VCERT_TOKEN\" }}"
 
 certificateTasks:
-  - name: certificado-nginx
+  - name: nginx-certificate
 
     renewBefore: 30d
 
     request:
       csr: local
       subject:
-        commonName: "www.suaempresa.com.br"
-        organization: "Sua Empresa S.A."            # O
+        commonName: "www.yourcompany.com"
+        organization: "Your Company Inc."           # O
         organizationalUnits:                         # OU
-          - "Tecnologia da Informacao"
-        locality: "Sao Paulo"
-        province: "SP"
-        country: "BR"
+          - "Information Technology"
+        locality: "New York"
+        province: "NY"
+        country: "US"
       keyType: rsa
       keySize: 2048
       sanDNS:
-        - "www.suaempresa.com.br"
-        - "suaempresa.com.br"
+        - "www.yourcompany.com"
+        - "yourcompany.com"
       validDays: 90
-      zone: "Certificates\\Producao\\Nginx"
+      zone: "Certificates\\Production\\Nginx"
 
     installations:
       - format: PEM
@@ -50,5 +50,5 @@ certificateTasks:
         keyFile: "/etc/nginx/certs/www.key"
         backupFiles: true
 
-        # POS: monta fullchain (cert+chain), valida (nginx -t) e reload.
+        # POST: builds the fullchain (cert+chain), validates (nginx -t), and reloads.
         afterInstallAction: "/usr/local/bin/post-renew-nginx.sh"

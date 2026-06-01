@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Hook POS-RENOVACAO
-# Executado pelo vcert (afterInstallAction) DEPOIS de gravar o certificado novo.
-# Use para: recarregar/reiniciar o servico para que ele leia o certificado novo.
+# POST-RENEWAL hook
+# Run by VCERT (afterInstallAction) AFTER writing the new certificate.
+# Use for: reloading/restarting the service so it reads the new certificate.
 # =============================================================================
 set -euo pipefail
 
 LOG="/var/log/vcert.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
-echo "$(ts) [POS] Certificado novo instalado, recarregando servico" >> "$LOG"
+echo "$(ts) [POST] New certificate installed, reloading service" >> "$LOG"
 
-# Prefira 'reload' a 'restart' quando o servico suportar (sem downtime).
+# Prefer 'reload' over 'restart' when the service supports it (no downtime).
 if systemctl is-active --quiet nginx; then
   nginx -t && systemctl reload nginx
-  echo "$(ts) [POS] nginx recarregado com sucesso" >> "$LOG"
+  echo "$(ts) [POST] nginx reloaded successfully" >> "$LOG"
 else
   systemctl start nginx
-  echo "$(ts) [POS] nginx iniciado" >> "$LOG"
+  echo "$(ts) [POST] nginx started" >> "$LOG"
 fi
 
-echo "$(ts) [POS] Renovacao concluida" >> "$LOG"
+echo "$(ts) [POST] Renewal complete" >> "$LOG"

@@ -1,69 +1,69 @@
 # =============================================================================
-# VCERT PLAYBOOK - CyberArk Certificate Manager Self-Hosted (antigo TPP)
+# VCERT PLAYBOOK - CyberArk Certificate Manager Self-Hosted (formerly TPP)
 # =============================================================================
-# Solicita/renova um certificado, gera o CSR localmente no Linux com os dados
-# informados, instala os arquivos e executa acoes de PRE e POS na renovacao.
+# Requests/renews a certificate, generates the CSR locally on Linux with the
+# given details, installs the files, and runs PRE and POST actions on renewal.
 #
-# Executar:
-#   export VCERT_TOKEN="seu_access_token"
+# Run:
+#   export VCERT_TOKEN="your_access_token"
 #   vcert run -f playbooks/tpp-selfhosted.yaml
 #
-# Validar sem aplicar:   vcert run -f playbooks/tpp-selfhosted.yaml --validate
-# Forcar renovacao:      vcert run -f playbooks/tpp-selfhosted.yaml --force-renew
+# Validate without applying:  vcert run -f playbooks/tpp-selfhosted.yaml --validate
+# Force renewal:              vcert run -f playbooks/tpp-selfhosted.yaml --force-renew
 # =============================================================================
 
 config:
   connection:
     platform: tpp
-    url: "https://tpp.suaempresa.com.br/vedsdk"
+    url: "https://tpp.yourcompany.com/vedsdk"
     credentials:
-      # Gere o token:
-      #   vcert getcred --username SEU_USER --password 'SENHA' \
-      #     -u https://tpp.suaempresa.com.br/vedsdk --client-id vcert-cli
+      # Generate the token:
+      #   vcert getcred --username YOUR_USER --password 'PASSWORD' \
+      #     -u https://tpp.yourcompany.com/vedsdk --client-id vcert-cli
       accessToken: "{{ Env \"VCERT_TOKEN\" }}"
-      # trustBundle: "/etc/ssl/certs/cyberark-chain.pem"  # CA interna, se necessario
+      # trustBundle: "/etc/ssl/certs/cyberark-chain.pem"  # internal CA, if needed
 
 certificateTasks:
-  - name: certificado-app-web
+  - name: web-app-certificate
 
-    # === PRAZO PARA INICIAR A RENOVACAO ===
-    # Renova quando faltar este tempo para o vencimento. Aceita "30d", "720h" ou "10%".
+    # === LEAD TIME TO START RENEWAL ===
+    # Renews when this much time is left before expiry. Accepts "30d", "720h", or "10%".
     renewBefore: 30d
 
     request:
-      # csr: local  -> gera CSR e chave privada na propria maquina (recomendado)
-      # csr: service -> a plataforma gera a chave
+      # csr: local   -> generates the CSR and private key on this machine (recommended)
+      # csr: service -> the platform generates the key
       csr: local
 
-      # === DADOS DO CSR (Subject / DN) ===
+      # === CSR DETAILS (Subject / DN) ===
       subject:
-        commonName: "app.suaempresa.com.br"
-        organization: "Sua Empresa S.A."            # O
-        organizationalUnits:                         # OU (pode haver varias)
-          - "Tecnologia da Informacao"
-          - "Seguranca"
-        locality: "Sao Paulo"                        # L
-        province: "SP"                               # ST
-        country: "BR"                                # C
+        commonName: "app.yourcompany.com"
+        organization: "Your Company Inc."           # O
+        organizationalUnits:                         # OU (there may be several)
+          - "Information Technology"
+          - "Security"
+        locality: "New York"                         # L
+        province: "NY"                               # ST
+        country: "US"                                # C
 
-      # === ALGORITMO E TAMANHO DE CHAVE ===
+      # === ALGORITHM AND KEY SIZE ===
       keyType: rsa
       keySize: 2048          # 2048 / 3072 / 4096
-      # Alternativa ECDSA (substitua as duas linhas acima):
+      # ECDSA alternative (replace the two lines above):
       # keyType: ecdsa
       # keyCurve: P256       # P256 / P384 / P521
 
       # === SANs ===
       sanDNS:
-        - "app.suaempresa.com.br"
-        - "www.app.suaempresa.com.br"
+        - "app.yourcompany.com"
+        - "www.app.yourcompany.com"
 
-      # === PERIODO DE VALIDADE (dias) ===
+      # === VALIDITY PERIOD (days) ===
       validDays: 90
-      # issuerHint: DIGICERT   # use se a CA exigir ao definir validade custom
+      # issuerHint: DIGICERT   # use if the CA requires it for custom validity
 
-      # === POLITICA / ZONE ===
-      zone: "Certificates\\Producao\\AppWeb"
+      # === POLICY / ZONE ===
+      zone: "Certificates\\Production\\WebApp"
 
     installations:
       - format: PEM
@@ -72,8 +72,8 @@ certificateTasks:
         keyFile: "/etc/ssl/app/app.key"
         backupFiles: true
 
-        # === ACAO PRE-RENOVACAO === (antes de instalar o certificado novo)
+        # === PRE-RENEWAL ACTION === (before installing the new certificate)
         beforeInstallAction: "/usr/local/bin/pre-renew.sh"
 
-        # === ACAO POS-RENOVACAO === (depois de instalar; recarrega o servico)
+        # === POST-RENEWAL ACTION === (after installing; reloads the service)
         afterInstallAction: "/usr/local/bin/post-renew.sh"

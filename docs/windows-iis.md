@@ -1,66 +1,66 @@
 # Windows / IIS
 
-Como usar o VCERT no Windows para instalar o certificado no **Windows Certificate Store (CAPI)** e fazer o **bind no IIS** automaticamente.
+How to use VCERT on Windows to install the certificate into the **Windows Certificate Store (CAPI)** and **bind it to IIS** automatically.
 
-## Visão geral
+## Overview
 
-No Windows, em vez de gravar arquivos PEM, o vcert instala o certificado direto no store usando `format: CAPI`. O hook de pós-renovação (PowerShell) localiza o certificado novo e o associa ao binding HTTPS do site no IIS.
+On Windows, instead of writing PEM files, VCERT installs the certificate directly into the store using `format: CAPI`. The post-renewal hook (PowerShell) locates the new certificate and associates it with the site's HTTPS binding in IIS.
 
-## Pré-requisitos
+## Prerequisites
 
-- `vcert.exe` ([releases](https://github.com/Venafi/vcert/releases) — artefato Windows).
-- PowerShell com o módulo **WebAdministration** (vem com o IIS / RSAT).
-- Executar como **Administrador** (escrita em `LocalMachine\My` e bind no IIS exigem privilégio).
+- `vcert.exe` ([releases](https://github.com/Venafi/vcert/releases) — Windows artifact).
+- PowerShell with the **WebAdministration** module (ships with IIS / RSAT).
+- Run as **Administrator** (writing to `LocalMachine\My` and binding in IIS require elevation).
 
-## Instalação sugerida
+## Suggested layout
 
 ```
-C:\vcert\vcert.exe                     # binário
+C:\vcert\vcert.exe                     # binary
 C:\vcert\playbook.yaml                 # playbook
-C:\vcert\scripts\post-renew-iis.ps1    # hook de bind
+C:\vcert\scripts\post-renew-iis.ps1    # binding hook
 C:\vcert\vcert.log                     # log
 ```
 
-## Campos CAPI do playbook
+## CAPI playbook fields
 
-| Campo | Descrição |
+| Field | Description |
 |---|---|
-| `format: CAPI` | Instala no Windows Certificate Store. |
-| `capiLocation` | `LocalMachine\\My` (computador) ou `CurrentUser\\My` (usuário). Escape as barras. |
-| `capiFriendlyName` | Nome amigável exibido no `mmc` / usado pelo script para achar o cert. |
-| `capiIsNonExportable` | `true` = chave privada não exportável (mais seguro). |
-| `backupFiles` | `true` faz backup antes de sobrescrever. |
-| `afterInstallAction` | Comando executado via `powershell.exe` após instalar (faz o bind). |
+| `format: CAPI` | Installs into the Windows Certificate Store. |
+| `capiLocation` | `LocalMachine\\My` (computer) or `CurrentUser\\My` (user). Escape the backslashes. |
+| `capiFriendlyName` | Friendly name shown in `mmc` / used by the script to find the cert. |
+| `capiIsNonExportable` | `true` = private key non-exportable (more secure). |
+| `backupFiles` | `true` makes a backup before overwriting. |
+| `afterInstallAction` | Command run via `powershell.exe` after installing (performs the binding). |
 
-> O playbook **não** faz o bind sozinho — isso é feito pelo PowerShell no `afterInstallAction`. Veja [`scripts/post-renew-iis.ps1`](../scripts/post-renew-iis.ps1).
+> The playbook does **not** bind by itself — that is done by PowerShell in the `afterInstallAction`. See [`scripts/post-renew-iis.ps1`](../scripts/post-renew-iis.ps1).
 
-## Executar
+## Run
 
 ```powershell
-$env:VCERT_TOKEN = "seu_access_token"
+$env:VCERT_TOKEN = "your_access_token"
 C:\vcert\vcert.exe run -f C:\vcert\playbook.yaml
 ```
 
-## Agendamento (Task Scheduler)
+## Scheduling (Task Scheduler)
 
-Rode 2x/dia. O vcert só renova dentro da janela `renewBefore`.
+Run twice a day. VCERT only renews within the `renewBefore` window.
 
 ```powershell
 $action  = New-ScheduledTaskAction -Execute "C:\vcert\vcert.exe" `
            -Argument "run -f C:\vcert\playbook.yaml"
 $trigger = New-ScheduledTaskTrigger -Daily -At 6am
 $trigger2 = New-ScheduledTaskTrigger -Daily -At 6pm
-# Rode como SYSTEM (ou conta de serviço com acesso ao store e ao IIS).
+# Run as SYSTEM (or a service account with access to the store and IIS).
 Register-ScheduledTask -TaskName "VCERT-IIS" `
   -Action $action -Trigger @($trigger, $trigger2) `
-  -User "SYSTEM" -RunLevel Highest -Description "Renovacao de certificado IIS via VCERT"
+  -User "SYSTEM" -RunLevel Highest -Description "IIS certificate renewal via VCERT"
 ```
 
-> Defina `VCERT_TOKEN` como variável de ambiente de **máquina** (ou leia de um cofre no início do script), pois a tarefa roda sem a sua sessão.
+> Set `VCERT_TOKEN` as a **machine** environment variable (or read it from a vault at the start of the script), since the task runs without your session.
 
-## Dicas
+## Tips
 
-- Para sites com **host header** (SNI), o script usa `SslFlags 1` e `-HostHeader`.
-- Após renovar, o script **reassocia** o binding ao novo thumbprint — não é preciso reiniciar o IIS.
-- Se preferir reiniciar o serviço mesmo assim: `afterInstallAction: "powershell.exe -Command Restart-Service W3SVC"`.
-- Para diagnosticar, veja `C:\vcert\vcert.log`.
+- For sites with a **host header** (SNI), the script uses `SslFlags 1` and `-HostHeader`.
+- After renewal, the script **re-associates** the binding with the new thumbprint — no IIS restart needed.
+- If you prefer to restart the service anyway: `afterInstallAction: "powershell.exe -Command Restart-Service W3SVC"`.
+- To troubleshoot, check `C:\vcert\vcert.log`.

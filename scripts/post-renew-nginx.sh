@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Hook POS-RENOVACAO - Nginx
-# Monta o fullchain (cert + chain) e recarrega o Nginx sem downtime.
-# Chamado pelo afterInstallAction do playbooks/nginx.yaml.
+# POST-RENEWAL hook - Nginx
+# Builds the fullchain (cert + chain) and reloads Nginx with no downtime.
+# Called by the afterInstallAction in playbooks/nginx.yaml.
 #
-# No nginx.conf aponte:
+# In nginx.conf, point to:
 #   ssl_certificate     /etc/nginx/certs/www.fullchain.crt;
 #   ssl_certificate_key /etc/nginx/certs/www.key;
 # =============================================================================
@@ -17,19 +17,19 @@ FULLCHAIN="${CERT_DIR}/www.fullchain.crt"
 LOG="/var/log/vcert.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
-echo "$(ts) [POS][nginx] Montando fullchain (cert + chain)" >> "$LOG"
+echo "$(ts) [POST][nginx] Building fullchain (cert + chain)" >> "$LOG"
 
-# Ordem para o Nginx: certificado do servidor primeiro, depois intermediarias.
+# Order for Nginx: server certificate first, then intermediates.
 umask 077
 cat "$CRT" "$CHAIN" > "${FULLCHAIN}.tmp"
 mv "${FULLCHAIN}.tmp" "$FULLCHAIN"
-chmod 644 "$FULLCHAIN"   # cert publico; a chave (.key) permanece 600
+chmod 644 "$FULLCHAIN"   # public cert; the key (.key) stays 600
 
-# Valida a configuracao antes de recarregar.
+# Validate the configuration before reloading.
 if nginx -t >/dev/null 2>&1; then
   systemctl reload nginx
-  echo "$(ts) [POS][nginx] Config valida, Nginx recarregado" >> "$LOG"
+  echo "$(ts) [POST][nginx] Config valid, Nginx reloaded" >> "$LOG"
 else
-  echo "$(ts) [POS][nginx] ERRO: config invalida, reload abortado" >> "$LOG"
+  echo "$(ts) [POST][nginx] ERROR: invalid config, reload aborted" >> "$LOG"
   exit 1
 fi

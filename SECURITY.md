@@ -1,29 +1,29 @@
-# Política de Segurança
+# Security Policy
 
-## Reportando uma vulnerabilidade
+## Reporting a vulnerability
 
-Se você encontrar uma vulnerabilidade de segurança neste repositório (ou um segredo exposto acidentalmente), **não abra uma issue pública** com os detalhes.
+If you find a security vulnerability in this repository (or an accidentally exposed secret), **do not open a public issue** with the details.
 
-1. Use o canal privado **GitHub Security Advisories** ("Security" → "Report a vulnerability") deste repositório, ou
-2. Entre em contato diretamente com o mantenedor.
+1. Use the private **GitHub Security Advisories** channel ("Security" → "Report a vulnerability") in this repository, or
+2. Contact the maintainer directly.
 
-Descreva:
-- O problema e o impacto potencial.
-- Passos para reproduzir.
-- Arquivo(s) e linha(s) envolvidos, se aplicável.
+Describe:
+- The issue and its potential impact.
+- Steps to reproduce.
+- The file(s) and line(s) involved, if applicable.
 
-## Boas práticas de segredos
+## Secrets best practices
 
-Este repositório contém **apenas exemplos**. Antes de usar em produção:
+This repository contains **examples only**. Before using in production:
 
-- **Nunca** faça commit de tokens, API keys, senhas, chaves privadas (`.key`, `.pem`, `.p12`, `.jks`) ou CSRs reais. O [`.gitignore`](.gitignore) já bloqueia esses padrões, mas confira sempre com `git status` antes do commit.
-- Forneça segredos via **variáveis de ambiente** (`{{ Env "VCERT_TOKEN" }}`) ou um **cofre** (CyberArk Conjur, HashiCorp Vault, etc.).
-- Restrinja permissões de arquivos de chave: `chmod 600` e dono igual ao usuário do serviço.
-- Rotacione tokens e API keys periodicamente e revogue os que vazarem.
+- **Never** commit tokens, API keys, passwords, private keys (`.key`, `.pem`, `.p12`, `.jks`), or real CSRs. The [`.gitignore`](.gitignore) already blocks these patterns, but always double-check with `git status` before committing.
+- Provide secrets via **environment variables** (`{{ Env "VCERT_TOKEN" }}`) or a **vault** (CyberArk Conjur, HashiCorp Vault, etc.).
+- Restrict key file permissions: `chmod 600` and owner equal to the service user.
+- Rotate tokens and API keys periodically and revoke any that leak.
 
-## Se um segredo foi exposto
+## If a secret was exposed
 
-1. **Revogue imediatamente** o token/API key no CyberArk Certificate Manager.
-2. **Reemita** o certificado afetado se a chave privada vazou.
-3. Remova o segredo do histórico do Git (ex.: `git filter-repo`) e force o push.
-4. Audite acessos que possam ter usado o segredo.
+1. **Immediately revoke** the token/API key in the CyberArk Certificate Manager.
+2. **Re-issue** the affected certificate if the private key leaked.
+3. Remove the secret from the Git history (e.g., `git filter-repo`) and force-push.
+4. Audit any access that may have used the secret.

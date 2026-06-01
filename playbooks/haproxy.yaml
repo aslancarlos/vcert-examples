@@ -1,56 +1,56 @@
 # =============================================================================
 # VCERT PLAYBOOK - HAProxy
 # =============================================================================
-# O HAProxy espera UM unico arquivo PEM contendo, na ordem:
-#   certificado + cadeia (intermediarias) + chave privada
+# HAProxy expects a SINGLE PEM file containing, in this order:
+#   certificate + chain (intermediates) + private key
 #
-# O vcert grava os arquivos PEM separados (cert, chain, key). O script de
-# pos-renovacao (post-renew-haproxy.sh) concatena tudo no arquivo que o HAProxy
-# usa e recarrega o servico sem downtime (reload).
+# VCERT writes the PEM files separately (cert, chain, key). The post-renewal
+# script (post-renew-haproxy.sh) concatenates everything into the file HAProxy
+# uses and reloads the service without downtime (reload).
 #
-# Executar:
-#   export VCERT_TOKEN="seu_access_token"
+# Run:
+#   export VCERT_TOKEN="your_access_token"
 #   vcert run -f playbooks/haproxy.yaml
 # =============================================================================
 
 config:
   connection:
     platform: tpp
-    url: "https://tpp.suaempresa.com.br/vedsdk"
+    url: "https://tpp.yourcompany.com/vedsdk"
     credentials:
       accessToken: "{{ Env \"VCERT_TOKEN\" }}"
 
 certificateTasks:
-  - name: certificado-haproxy
+  - name: haproxy-certificate
 
-    # Prazo para iniciar a renovacao
+    # Lead time to start renewal
     renewBefore: 30d
 
     request:
       csr: local
       subject:
-        commonName: "lb.suaempresa.com.br"
-        organization: "Sua Empresa S.A."            # O
+        commonName: "lb.yourcompany.com"
+        organization: "Your Company Inc."           # O
         organizationalUnits:                         # OU
-          - "Infraestrutura"
-        locality: "Sao Paulo"
-        province: "SP"
-        country: "BR"
+          - "Infrastructure"
+        locality: "New York"
+        province: "NY"
+        country: "US"
       keyType: rsa
       keySize: 2048
       sanDNS:
-        - "lb.suaempresa.com.br"
-        - "www.suaempresa.com.br"
+        - "lb.yourcompany.com"
+        - "www.yourcompany.com"
       validDays: 90
-      zone: "Certificates\\Producao\\HAProxy"
+      zone: "Certificates\\Production\\HAProxy"
 
     installations:
       - format: PEM
-        # Arquivos separados que o vcert grava:
+        # Separate files that VCERT writes:
         file: "/etc/haproxy/certs/lb.crt"
         chainFile: "/etc/haproxy/certs/lb.chain.crt"
         keyFile: "/etc/haproxy/certs/lb.key"
         backupFiles: true
 
-        # POS: concatena cert+chain+key em /etc/haproxy/certs/lb.pem e recarrega.
+        # POST: concatenates cert+chain+key into /etc/haproxy/certs/lb.pem and reloads.
         afterInstallAction: "/usr/local/bin/post-renew-haproxy.sh"

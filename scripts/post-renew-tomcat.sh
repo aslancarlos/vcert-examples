@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Hook POS-RENOVACAO - Apache Tomcat
-# Ajusta permissoes do keystore e reinicia o Tomcat para recarregar o certificado.
-# Chamado pelo afterInstallAction do playbooks/tomcat.yaml.
+# POST-RENEWAL hook - Apache Tomcat
+# Fixes keystore permissions and restarts Tomcat to reload the certificate.
+# Called by the afterInstallAction in playbooks/tomcat.yaml.
 #
-# Obs.: o Tomcat nao recarrega o keystore "a quente"; restart e o caminho usual.
-# Para zero downtime, coloque o Tomcat atras de um LB e faca rolling restart.
+# Note: Tomcat does not hot-reload the keystore; a restart is the usual path.
+# For zero downtime, place Tomcat behind an LB and do a rolling restart.
 # =============================================================================
 set -euo pipefail
 
@@ -15,18 +15,18 @@ SVC="tomcat"
 LOG="/var/log/vcert.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
-echo "$(ts) [POS][tomcat] Ajustando permissoes do keystore" >> "$LOG"
+echo "$(ts) [POST][tomcat] Fixing keystore permissions" >> "$LOG"
 chown "${TOMCAT_USER}:${TOMCAT_USER}" "$KEYSTORE" || true
 chmod 600 "$KEYSTORE"
 
-echo "$(ts) [POS][tomcat] Reiniciando ${SVC}" >> "$LOG"
+echo "$(ts) [POST][tomcat] Restarting ${SVC}" >> "$LOG"
 systemctl restart "$SVC"
 
-# Aguarda subir e confirma que esta ativo.
+# Wait for it to come up and confirm it is active.
 sleep 5
 if systemctl is-active --quiet "$SVC"; then
-  echo "$(ts) [POS][tomcat] ${SVC} reiniciado e ativo" >> "$LOG"
+  echo "$(ts) [POST][tomcat] ${SVC} restarted and active" >> "$LOG"
 else
-  echo "$(ts) [POS][tomcat] ERRO: ${SVC} nao subiu apos restart" >> "$LOG"
+  echo "$(ts) [POST][tomcat] ERROR: ${SVC} did not come up after restart" >> "$LOG"
   exit 1
 fi

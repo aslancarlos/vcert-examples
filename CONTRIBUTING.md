@@ -1,51 +1,51 @@
-# Contribuindo
+# Contributing
 
-Obrigado pelo interesse em contribuir com o **vcert-examples**! 🎉
+Thank you for your interest in contributing to **vcert-examples**! 🎉
 
-## Como contribuir
+## How to contribute
 
-1. Faça um **fork** do repositório.
-2. Crie uma branch descritiva: `git checkout -b feat/exemplo-haproxy`.
-3. Faça suas mudanças seguindo as diretrizes abaixo.
-4. Abra um **Pull Request** descrevendo o que mudou e por quê.
+1. **Fork** the repository.
+2. Create a descriptive branch: `git checkout -b feat/haproxy-example`.
+3. Make your changes following the guidelines below.
+4. Open a **Pull Request** describing what changed and why.
 
-## Diretrizes
+## Guidelines
 
-### Exemplos e playbooks
+### Examples and playbooks
 
-- Use **valores fictícios** (`suaempresa.com.br`, caminhos genéricos, URLs de exemplo).
-- **Nunca** inclua segredos reais (tokens, senhas, chaves, CSRs).
-- Comente os campos importantes em **português** para facilitar o entendimento.
-- Valide o playbook antes de enviar:
-
-  ```bash
-  vcert run -f playbooks/seu-exemplo.yaml --validate
-  ```
-
-- Garanta que o YAML é válido:
+- Use **placeholder values** (`yourcompany.com`, generic paths, example URLs).
+- **Never** include real secrets (tokens, passwords, keys, CSRs).
+- Comment the important fields in **English** to make them easy to understand.
+- Validate the playbook before submitting:
 
   ```bash
-  # com yamllint (opcional)
-  yamllint playbooks/seu-exemplo.yaml
+  vcert run -f playbooks/your-example.yaml --validate
   ```
 
-### Documentação
+- Make sure the YAML is valid:
 
-- Mantenha o `README.md` e o `docs/` atualizados quando adicionar um exemplo.
-- Use Markdown limpo, com blocos de código identificados pela linguagem.
+  ```bash
+  # with yamllint (optional)
+  yamllint playbooks/your-example.yaml
+  ```
+
+### Documentation
+
+- Keep `README.md` and `docs/` up to date when you add an example.
+- Use clean Markdown, with code blocks tagged by language.
 
 ### Scripts
 
-- Scripts de shell devem começar com `#!/usr/bin/env bash` e `set -euo pipefail`.
-- Torne-os idempotentes sempre que possível.
+- Shell scripts must start with `#!/usr/bin/env bash` and `set -euo pipefail`.
+- Make them idempotent whenever possible.
 
-## Checklist do Pull Request
+## Pull Request checklist
 
-- [ ] Não há segredos no diff (`git diff` revisado).
-- [ ] Playbooks novos foram validados com `--validate`.
-- [ ] Documentação atualizada quando necessário.
-- [ ] Entrada adicionada ao `CHANGELOG.md` (seção *Unreleased*).
+- [ ] No secrets in the diff (`git diff` reviewed).
+- [ ] New playbooks validated with `--validate`.
+- [ ] Documentation updated when needed.
+- [ ] Entry added to `CHANGELOG.md` (the *Unreleased* section).
 
-## Código de conduta
+## Code of conduct
 
-Seja respeitoso e colaborativo. Discussões técnicas são bem-vindas; ataques pessoais não.
+Be respectful and collaborative. Technical discussions are welcome; personal attacks are not.

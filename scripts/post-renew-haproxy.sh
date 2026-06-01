@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Hook POS-RENOVACAO - HAProxy
-# Concatena cert + chain + key num unico PEM e recarrega o HAProxy sem downtime.
-# Chamado pelo afterInstallAction do playbooks/haproxy.yaml.
+# POST-RENEWAL hook - HAProxy
+# Concatenates cert + chain + key into a single PEM and reloads HAProxy with no downtime.
+# Called by the afterInstallAction in playbooks/haproxy.yaml.
 # =============================================================================
 set -euo pipefail
 
@@ -14,19 +14,19 @@ COMBINED="${CERT_DIR}/lb.pem"
 LOG="/var/log/vcert.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
-echo "$(ts) [POS][haproxy] Montando PEM combinado" >> "$LOG"
+echo "$(ts) [POST][haproxy] Building combined PEM" >> "$LOG"
 
-# Ordem exigida pelo HAProxy: certificado, cadeia, chave privada.
+# Order required by HAProxy: certificate, chain, private key.
 umask 077
 cat "$CRT" "$CHAIN" "$KEY" > "${COMBINED}.tmp"
 mv "${COMBINED}.tmp" "$COMBINED"
 chmod 600 "$COMBINED"
 
-# Valida a configuracao antes de recarregar.
+# Validate the configuration before reloading.
 if haproxy -c -f /etc/haproxy/haproxy.cfg >/dev/null 2>&1; then
   systemctl reload haproxy
-  echo "$(ts) [POS][haproxy] Config valida, HAProxy recarregado" >> "$LOG"
+  echo "$(ts) [POST][haproxy] Config valid, HAProxy reloaded" >> "$LOG"
 else
-  echo "$(ts) [POS][haproxy] ERRO: config invalida, reload abortado" >> "$LOG"
+  echo "$(ts) [POST][haproxy] ERROR: invalid config, reload aborted" >> "$LOG"
   exit 1
 fi

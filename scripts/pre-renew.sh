@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Hook PRE-RENOVACAO
-# Executado pelo vcert (beforeInstallAction) ANTES de gravar o certificado novo.
-# Use para: colocar app em manutencao, parar servico, snapshot, etc.
+# PRE-RENEWAL hook
+# Run by VCERT (beforeInstallAction) BEFORE writing the new certificate.
+# Use for: putting the app in maintenance, stopping a service, snapshots, etc.
 # =============================================================================
 set -euo pipefail
 
 LOG="/var/log/vcert.log"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
-echo "$(ts) [PRE] Iniciando renovacao do certificado" >> "$LOG"
+echo "$(ts) [PRE] Starting certificate renewal" >> "$LOG"
 
-# Exemplo: parar o servico antes de trocar os arquivos (opcional).
-# Use '|| true' para nao abortar a renovacao caso o servico ja esteja parado.
+# Example: stop the service before swapping files (optional).
+# Use '|| true' so the renewal isn't aborted if the service is already stopped.
 # systemctl stop nginx || true
 
-echo "$(ts) [PRE] Pronto para instalar o certificado novo" >> "$LOG"
+echo "$(ts) [PRE] Ready to install the new certificate" >> "$LOG"

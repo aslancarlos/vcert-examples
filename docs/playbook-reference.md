@@ -1,81 +1,84 @@
-# Referência do Playbook
+# Playbook Reference
 
-Resumo dos campos mais usados no playbook do VCERT. Para a referência completa e oficial, consulte a [documentação do vcert](https://github.com/Venafi/vcert/blob/master/README-PLAYBOOK.md).
+A summary of the most commonly used fields in the VCERT playbook. For the complete, official reference, see the [vcert documentation](https://github.com/Venafi/vcert/blob/master/README-PLAYBOOK.md).
 
-## Estrutura geral
+## General structure
 
 ```yaml
-config:           # conexão e credenciais
-certificateTasks: # uma ou mais tarefas de certificado
+config:           # connection and credentials
+certificateTasks: # one or more certificate tasks
 ```
 
 ## `config.connection`
 
-| Campo | Descrição |
+| Field | Description |
 |---|---|
-| `platform` | `tpp` (Self-Hosted) ou `vaas` (SaaS). |
-| `url` | URL do endpoint (vedsdk para TPP; API para SaaS). |
-| `credentials.accessToken` | Token OAuth (TPP). |
+| `platform` | `tpp` (Self-Hosted) or `vaas` (SaaS). |
+| `url` | Endpoint URL (vedsdk for TPP; API for SaaS). |
+| `credentials.accessToken` | OAuth token (TPP). |
 | `credentials.apiKey` | API key (SaaS). |
-| `credentials.p12Task` | Credencial mTLS via PKCS#12 (TPP). |
-| `trustBundle` | Caminho para CA interna, se necessário. |
+| `credentials.p12Task` | mTLS credential via PKCS#12 (TPP). |
+| `trustBundle` | Path to an internal CA, if needed. |
 
-> Use `{{ Env "NOME_DA_VAR" }}` para injetar segredos de variáveis de ambiente.
+> Use `{{ Env "VAR_NAME" }}` to inject secrets from environment variables.
 
 ## `certificateTasks[]`
 
-| Campo | Descrição |
+| Field | Description |
 |---|---|
-| `name` | Nome único da tarefa. |
-| `renewBefore` | **Quando renovar.** Aceita dias (`30d`), horas (`720h`) ou percentual (`10%`). |
-| `request` | Dados do certificado/CSR (ver abaixo). |
-| `installations` | Onde gravar e ações de pré/pós (ver abaixo). |
+| `name` | Unique task name. |
+| `renewBefore` | **When to renew.** Accepts days (`30d`), hours (`720h`), or a percentage (`10%`). |
+| `request` | Certificate/CSR details (see below). |
+| `installations` | Where to write files and pre/post actions (see below). |
 
 ## `request`
 
-| Campo | Descrição |
+| Field | Description |
 |---|---|
-| `csr` | `local` (gera chave na máquina, recomendado) ou `service` (plataforma gera). |
-| `subject.commonName` | CN do certificado. |
-| `subject.organization` | **O** — organização. |
-| `subject.organizationalUnits` | **OU** — lista (pode ter várias). |
-| `subject.locality` | **L** — cidade. |
-| `subject.province` | **ST** — estado. |
-| `subject.country` | **C** — país (ex.: `BR`). |
-| `keyType` | `rsa` ou `ecdsa`. |
-| `keySize` | Tamanho RSA: `2048` / `3072` / `4096`. |
-| `keyCurve` | Curva ECDSA: `P256` / `P384` / `P521`. |
-| `sanDNS` | Lista de SANs DNS. |
-| `sanIP` / `sanEmail` | SANs de IP / e-mail. |
-| `validDays` | **Período de validade** em dias (sujeito à política da zone). |
-| `issuerHint` | `DIGICERT` / `MICROSOFT` / `ENTRUST` quando a CA exige para validade custom. |
-| `zone` | Policy folder (TPP) ou `Application\IssuingTemplate` (SaaS). |
+| `csr` | `local` (generates the key on the machine, recommended) or `service` (the platform generates it). |
+| `subject.commonName` | The certificate CN. |
+| `subject.organization` | **O** — organization. |
+| `subject.organizationalUnits` | **OU** — list (may have several). |
+| `subject.locality` | **L** — city. |
+| `subject.province` | **ST** — state/province. |
+| `subject.country` | **C** — country (e.g., `BR`). |
+| `keyType` | `rsa` or `ecdsa`. |
+| `keySize` | RSA size: `2048` / `3072` / `4096`. |
+| `keyCurve` | ECDSA curve: `P256` / `P384` / `P521`. |
+| `sanDNS` | List of DNS SANs. |
+| `sanIP` / `sanEmail` | IP / email SANs. |
+| `validDays` | **Validity period** in days (subject to the zone policy). |
+| `issuerHint` | `DIGICERT` / `MICROSOFT` / `ENTRUST` when the CA requires it for custom validity. |
+| `zone` | Policy folder (TPP) or `Application\IssuingTemplate` (SaaS). |
 
 ## `installations[]`
 
-| Campo | Descrição |
+| Field | Description |
 |---|---|
-| `format` | `PEM`, `PKCS12` ou `JKS`. |
-| `file` | Caminho do arquivo de certificado / keystore. |
-| `chainFile` | Caminho da cadeia (somente PEM). |
-| `keyFile` | Caminho da chave privada (somente PEM). |
-| `password` | Senha do PKCS#12. |
-| `jksAlias` / `jksPassword` | Alias e senha do keystore JKS. |
-| `backupFiles` | `true` faz backup `.bak` antes de sobrescrever. |
-| `beforeInstallAction` | **Ação PRE** — comando/script executado antes de instalar. |
-| `afterInstallAction` | **Ação POS** — comando/script executado após instalar (ex.: recarregar serviço). |
+| `format` | `PEM`, `PKCS12`, `JKS`, or `CAPI` (Windows). |
+| `file` | Path to the certificate / keystore file. |
+| `chainFile` | Path to the chain (PEM only). |
+| `keyFile` | Path to the private key (PEM only). |
+| `password` | PKCS#12 password. |
+| `jksAlias` / `jksPassword` | JKS keystore alias and password. |
+| `capiLocation` | Windows store: `LocalMachine\\My` or `CurrentUser\\My` (CAPI). |
+| `capiFriendlyName` | Friendly name in the Windows store (CAPI). |
+| `capiIsNonExportable` | `true` marks the private key as non-exportable (CAPI). |
+| `backupFiles` | `true` makes a `.bak` backup before overwriting. |
+| `beforeInstallAction` | **PRE action** — command/script run before installing. |
+| `afterInstallAction` | **POST action** — command/script run after installing (e.g., reload a service). |
 
-## Mapeamento do pedido original
+## Mapping to the original request
 
-| O que você pediu | Campo no playbook |
+| What you asked for | Playbook field |
 |---|---|
-| O (organização) | `request.subject.organization` |
-| OU (unidade) | `request.subject.organizationalUnits` |
-| Algoritmo | `request.keyType` |
-| Tamanho de chave | `request.keySize` (RSA) / `request.keyCurve` (ECDSA) |
-| Período de validade | `request.validDays` |
-| Prazo para iniciar a renovação | `certificateTasks[].renewBefore` |
-| Ação PRE na renovação | `installations[].beforeInstallAction` |
-| Ação POS na renovação | `installations[].afterInstallAction` |
+| O (organization) | `request.subject.organization` |
+| OU (unit) | `request.subject.organizationalUnits` |
+| Algorithm | `request.keyType` |
+| Key size | `request.keySize` (RSA) / `request.keyCurve` (ECDSA) |
+| Validity period | `request.validDays` |
+| Lead time to start renewal | `certificateTasks[].renewBefore` |
+| PRE action on renewal | `installations[].beforeInstallAction` |
+| POST action on renewal | `installations[].afterInstallAction` |
 
-> ⚠️ A **zone/política do servidor** pode sobrescrever validade, algoritmo, tamanho de chave e até o Subject. Se o resultado diferir do playbook, é a política do lado do servidor mandando. Valide com `vcert run -f arquivo.yaml --validate`.
+> ⚠️ The server-side **zone/policy** may override validity, algorithm, key size, and even the Subject. If the result differs from the playbook, the server-side policy is winning. Validate with `vcert run -f file.yaml --validate`.

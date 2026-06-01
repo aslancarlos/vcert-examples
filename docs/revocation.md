@@ -1,73 +1,73 @@
-# Revogação de Certificados
+# Certificate Revocation
 
-A revogação **não** faz parte do playbook — é uma ação pontual feita pela CLI com `vcert revoke`. Disponível no **CyberArk Certificate Manager Self-Hosted (TPP)**.
+Revocation is **not** part of the playbook — it is a one-off action performed via the CLI with `vcert revoke`. Available on the **CyberArk Certificate Manager Self-Hosted (TPP)**.
 
-> Revogar invalida o certificado na CA. Faça apenas quando necessário (chave comprometida, certificado substituído, host desativado).
+> Revoking invalidates the certificate at the CA. Only do this when necessary (compromised key, superseded certificate, decommissioned host).
 
-## Sintaxe
+## Syntax
 
 ```bash
-vcert revoke -u <url> -t <token> [--id <CertificateDN> | --thumbprint <SHA1>] --reason <razao>
+vcert revoke -u <url> -t <token> [--id <CertificateDN> | --thumbprint <SHA1>] --reason <reason>
 ```
 
 ### Flags
 
-| Flag | Descrição |
+| Flag | Description |
 |---|---|
-| `-u` | URL do CyberArk Certificate Manager (vedsdk). |
+| `-u` | CyberArk Certificate Manager URL (vedsdk). |
 | `-t` | Access token. |
-| `--id` | Identificador do certificado (DN da policy). Aceita `file:` como prefixo. |
-| `--thumbprint` | Thumbprint SHA1 do certificado. Aceita `file:`. |
-| `--reason` | Motivo da revogação (ver abaixo). |
-| `--no-retire` | **Não** desabilita o objeto, permitindo reemissão depois. Omita para desabilitar. |
+| `--id` | Certificate identifier (policy DN). Accepts a `file:` prefix. |
+| `--thumbprint` | SHA1 thumbprint of the certificate. Accepts `file:`. |
+| `--reason` | Revocation reason (see below). |
+| `--no-retire` | Does **not** disable the object, allowing re-enrollment later. Omit to disable it. |
 
-### Motivos válidos (`--reason`)
+### Valid reasons (`--reason`)
 
-`none` (padrão) · `key-compromise` · `ca-compromise` · `affiliation-changed` · `superseded` · `cessation-of-operation`
+`none` (default) · `key-compromise` · `ca-compromise` · `affiliation-changed` · `superseded` · `cessation-of-operation`
 
-## Exemplos
+## Examples
 
-Por DN (identificador da policy):
+By DN (policy identifier):
 
 ```bash
-export VCERT_TOKEN="seu_access_token"
+export VCERT_TOKEN="your_access_token"
 vcert revoke \
-  -u https://tpp.suaempresa.com.br/vedsdk \
+  -u https://tpp.yourcompany.com/vedsdk \
   -t "$VCERT_TOKEN" \
-  --id '\VED\Policy\Producao\AppWeb\www.suaempresa.com.br' \
+  --id '\VED\Policy\Production\AppWeb\www.yourcompany.com' \
   --reason superseded \
   --no-retire
 ```
 
-Por thumbprint:
+By thumbprint:
 
 ```bash
 vcert revoke \
-  -u https://tpp.suaempresa.com.br/vedsdk \
+  -u https://tpp.yourcompany.com/vedsdk \
   -t "$VCERT_TOKEN" \
   --thumbprint 0123456789ABCDEF0123456789ABCDEF01234567 \
   --reason key-compromise
 ```
 
-Via script auxiliar deste repo:
+Via this repo's helper script:
 
 ```bash
-export VCERT_TOKEN="seu_access_token"
-./scripts/revoke.sh --id '\VED\Policy\Producao\AppWeb\www.suaempresa.com.br' superseded
+export VCERT_TOKEN="your_access_token"
+./scripts/revoke.sh --id '\VED\Policy\Production\AppWeb\www.yourcompany.com' superseded
 ```
 
-## `--no-retire`: revogar vs. desabilitar
+## `--no-retire`: revoke vs. retire
 
-- **Com `--no-retire`**: o certificado é revogado, mas o objeto continua na plataforma e pode ser **reemitido** depois.
-- **Sem `--no-retire`**: além de revogar, o objeto é **desabilitado** (retire). Use quando o host/serviço foi desativado de vez.
+- **With `--no-retire`**: the certificate is revoked, but the object stays on the platform and can be **re-enrolled** later.
+- **Without `--no-retire`**: in addition to revoking, the object is **disabled (retired)**. Use this when the host/service is decommissioned for good.
 
-## Quando usar cada motivo
+## Which reason to use
 
-| Situação | Motivo sugerido |
+| Situation | Suggested reason |
 |---|---|
-| Chave privada vazou/comprometida | `key-compromise` |
-| Trocado por um novo (rotação manual) | `superseded` |
-| Host/serviço desativado | `cessation-of-operation` (geralmente sem `--no-retire`) |
-| Mudança de organização/titularidade | `affiliation-changed` |
+| Private key leaked/compromised | `key-compromise` |
+| Replaced by a new one (manual rotation) | `superseded` |
+| Host/service decommissioned | `cessation-of-operation` (usually without `--no-retire`) |
+| Organization/ownership change | `affiliation-changed` |
 
-> No **SaaS (VaaS)** a revogação pelo `vcert revoke` pode não estar disponível — use o console do CyberArk Certificate Manager nesse caso.
+> On **SaaS (VaaS)**, revocation via `vcert revoke` may not be available — use the CyberArk Certificate Manager console in that case.

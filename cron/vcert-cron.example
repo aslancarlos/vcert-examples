@@ -1,11 +1,11 @@
 # =============================================================================
-# Exemplo de entrada de crontab para renovacao automatica via VCERT
-# Instalar com:  crontab -e   (e cole a linha abaixo, ajustando os caminhos)
+# Example crontab entry for automatic renewal via VCERT
+# Install with:  crontab -e   (then paste the line below, adjusting the paths)
 #
-# O vcert so renova quando faltar menos que "renewBefore" para o vencimento,
-# entao rodar com frequencia (ex.: a cada 12h) e seguro e recomendado.
+# VCERT only renews when less than "renewBefore" is left before expiry, so
+# running frequently (e.g., every 12h) is safe and recommended.
 # =============================================================================
 
-# Carrega o token de um arquivo de ambiente protegido (chmod 600).
-# As 06:00 e as 18:00 todos os dias.
+# Loads the token from a protected environment file (chmod 600).
+# At 06:00 and 18:00 every day.
 0 6,18 * * * VCERT_TOKEN="$(cat /etc/vcert/token)" /usr/local/bin/vcert run -f /etc/vcert/playbook.yaml >> /var/log/vcert.log 2>&1

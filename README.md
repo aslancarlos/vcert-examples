@@ -1,78 +1,77 @@
 # vcert-examples
 
-Exemplos práticos e boas práticas de uso do **VCERT** com o **CyberArk Certificate Manager** (antigo Venafi Trust Protection Platform / Venafi as a Service) para automatizar a **emissão**, **instalação** e **renovação** de certificados TLS em Linux.
+Practical examples and best practices for using **VCERT** with the **CyberArk Certificate Manager** (formerly Venafi Trust Protection Platform / Venafi as a Service) to automate the **enrollment**, **installation**, and **renewal** of TLS certificates on Linux and Windows.
 
-O foco deste repositório é o modelo de **playbook** do VCERT (`vcert run -f playbook.yaml`), que cobre todo o ciclo de vida do certificado de forma declarativa: geração de CSR, instalação dos arquivos e execução de ações de **pré** e **pós** renovação (ex.: parar/recarregar serviços).
+This repository focuses on the VCERT **playbook** model (`vcert run -f playbook.yaml`), which covers the full certificate lifecycle declaratively: CSR generation, file installation, and **pre** and **post** renewal actions (e.g., stopping/reloading services).
 
-> ⚠️ **Aviso:** Os exemplos usam valores fictícios (`suaempresa.com.br`, caminhos, URLs). Ajuste para o seu ambiente. **Nunca** faça commit de tokens, senhas ou chaves privadas.
-
----
-
-## Índice
-
-- [O que é o VCERT](#o-que-é-o-vcert)
-- [Como funciona (diagrama)](#como-funciona-diagrama)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação rápida](#instalação-rápida)
-- [Início rápido (Quickstart)](#início-rápido-quickstart)
-- [Estrutura do repositório](#estrutura-do-repositório)
-- [Exemplos disponíveis](#exemplos-disponíveis)
-- [Documentação](#documentação)
-- [Boas práticas](#boas-práticas)
-- [Segurança](#segurança)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
+> ⚠️ **Notice:** The examples use placeholder values (`yourcompany.com`, paths, URLs). Adapt them to your environment. **Never** commit tokens, passwords, or private keys.
 
 ---
 
-## O que é o VCERT
+## Table of Contents
 
-O [VCERT](https://github.com/Venafi/vcert) é a ferramenta de linha de comando (e biblioteca Go) usada para integrar máquinas e pipelines ao CyberArk Certificate Manager. Com ele você consegue:
-
-- **Solicitar / inscrever (enroll)** certificados.
-- **Renovar** certificados existentes automaticamente.
-- **Recuperar (pickup)** certificados emitidos.
-- **Revogar** certificados.
-- Rodar **playbooks** que orquestram o ciclo de vida completo, incluindo a instalação dos arquivos e hooks de pré/pós ação.
+- [How it works (diagram)](#how-it-works-diagram)
+- [Prerequisites](#prerequisites)
+- [Quick install](#quick-install)
+- [Quickstart](#quickstart)
+- [Repository structure](#repository-structure)
+- [Available examples](#available-examples)
+- [Documentation](#documentation)
+- [Best practices](#best-practices)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## Como funciona (diagrama)
+## What is VCERT
+
+[VCERT](https://github.com/Venafi/vcert) is the command-line tool (and Go library) used to integrate machines and pipelines with the CyberArk Certificate Manager. With it you can:
+
+- **Request / enroll** certificates.
+- **Renew** existing certificates automatically.
+- **Pick up (retrieve)** issued certificates.
+- **Revoke** certificates.
+- Run **playbooks** that orchestrate the full lifecycle, including file installation and pre/post action hooks.
+
+---
+
+## How it works (diagram)
 
 ```mermaid
 flowchart TD
     A([cron / systemd timer]) --> B[vcert run -f playbook.yaml]
-    B --> C{Dentro da janela<br/>renewBefore?}
-    C -- Nao --> Z([Encerra: nada a fazer])
-    C -- Sim --> D[Gera CSR + chave local<br/>O, OU, algoritmo, keySize]
-    D --> E[CyberArk Certificate Manager<br/>aplica a policy/zone e emite]
-    E --> F[beforeInstallAction<br/>ACAO PRE]
-    F --> G[Grava arquivos<br/>PEM / PKCS12 / JKS<br/>+ backup .bak]
-    G --> H[afterInstallAction<br/>ACAO POS: reload/restart]
-    H --> I([Servico usando o<br/>certificado novo])
+    B --> C{Within the<br/>renewBefore window?}
+    C -- No --> Z([Exit: nothing to do])
+    C -- Yes --> D[Generate CSR + local key<br/>O, OU, algorithm, keySize]
+    D --> E[CyberArk Certificate Manager<br/>applies the policy/zone and issues]
+    E --> F[beforeInstallAction<br/>PRE ACTION]
+    F --> G[Write files<br/>PEM / PKCS12 / JKS<br/>+ .bak backup]
+    G --> H[afterInstallAction<br/>POST ACTION: reload/restart]
+    H --> I([Service using the<br/>new certificate])
 ```
 
-Mais diagramas (componentes e por serviço) em [`docs/architecture.md`](docs/architecture.md).
+More diagrams (components and per-service) in [`docs/architecture.md`](docs/architecture.md).
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
-- Linux (Debian/Ubuntu e RHEL/Rocky) **ou Windows Server** (para IIS — veja [`docs/windows-iis.md`](docs/windows-iis.md)).
-- Binário do `vcert` ([releases](https://github.com/Venafi/vcert/releases)).
-- Acesso ao CyberArk Certificate Manager:
-  - **Self-Hosted (TPP):** URL do vedsdk + `access token` (ou credenciais para gerá-lo).
-  - **SaaS (VaaS):** URL da API + `API key`.
-- Uma **policy folder / zone** (Self-Hosted) ou **Application + Issuing Template** (SaaS) onde você tenha permissão para emitir.
+- Linux (Debian/Ubuntu and RHEL/Rocky) **or Windows Server** (for IIS — see [`docs/windows-iis.md`](docs/windows-iis.md)).
+- The `vcert` binary ([releases](https://github.com/Venafi/vcert/releases)).
+- Access to the CyberArk Certificate Manager:
+  - **Self-Hosted (TPP):** vedsdk URL + `access token` (or credentials to generate one).
+  - **SaaS (VaaS):** API URL + `API key`.
+- A **policy folder / zone** (Self-Hosted) or **Application + Issuing Template** (SaaS) where you have permission to issue.
 
 ---
 
-## Instalação rápida
+## Quick install
 
 ```bash
-# Baixe o binário correspondente à sua arquitetura em:
+# Download the binary for your architecture from:
 #   https://github.com/Venafi/vcert/releases
-# Exemplo (Linux x86_64):
+# Example (Linux x86_64):
 curl -L -o vcert.zip https://github.com/Venafi/vcert/releases/latest/download/vcert_linux.zip
 unzip vcert.zip
 chmod +x vcert
@@ -80,63 +79,63 @@ sudo mv vcert /usr/local/bin/vcert
 vcert --version
 ```
 
-Veja o passo a passo completo em [`docs/installation.md`](docs/installation.md).
+See the full walkthrough in [`docs/installation.md`](docs/installation.md).
 
 ---
 
-## Início rápido (Quickstart)
+## Quickstart
 
-1. **Autentique-se** e gere um token (Self-Hosted):
+1. **Authenticate** and generate a token (Self-Hosted):
 
    ```bash
    vcert getcred \
-     --username SEU_USUARIO \
-     --password 'SUA_SENHA' \
-     -u https://tpp.suaempresa.com.br/vedsdk \
+     --username YOUR_USER \
+     --password 'YOUR_PASSWORD' \
+     -u https://tpp.yourcompany.com/vedsdk \
      --client-id vcert-cli
    ```
 
-2. **Exporte o token** como variável de ambiente (o playbook o lê de lá):
+2. **Export the token** as an environment variable (the playbook reads it from there):
 
    ```bash
-   export VCERT_TOKEN="cole_o_access_token_aqui"
+   export VCERT_TOKEN="paste_the_access_token_here"
    ```
 
-3. **Edite** um dos playbooks em [`playbooks/`](playbooks/) com os dados do seu certificado.
+3. **Edit** one of the playbooks in [`playbooks/`](playbooks/) with your certificate details.
 
-4. **Valide** a sintaxe e **execute**:
+4. **Validate** the syntax and **run**:
 
    ```bash
    vcert run -f playbooks/tpp-selfhosted.yaml --validate
    vcert run -f playbooks/tpp-selfhosted.yaml
    ```
 
-5. **Automatize** a renovação com [cron](cron/) ou [systemd timer](systemd/).
+5. **Automate** the renewal with [cron](cron/) or a [systemd timer](systemd/).
 
 ---
 
-## Estrutura do repositório
+## Repository structure
 
 ```
 vcert-examples/
-├── README.md                      # este arquivo
+├── README.md                      # this file
 ├── LICENSE                        # MIT
-├── CONTRIBUTING.md                # como contribuir
-├── SECURITY.md                    # política de segurança e como reportar
-├── CHANGELOG.md                   # histórico de mudanças
-├── .gitignore                     # ignora segredos e artefatos
+├── CONTRIBUTING.md                # how to contribute
+├── SECURITY.md                    # security policy and how to report
+├── CHANGELOG.md                   # change history
+├── .gitignore                     # ignores secrets and artifacts
 ├── docs/
-│   ├── installation.md            # instalação do vcert
-│   ├── authentication.md          # autenticação (TPP token / SaaS API key)
-│   ├── playbook-reference.md      # referência dos campos do playbook
-│   ├── architecture.md            # diagramas de fluxo e por serviço
-│   ├── windows-iis.md             # guia Windows / IIS (CAPI + bind)
-│   ├── revocation.md              # revogação de certificados
-│   └── best-practices.md          # boas práticas detalhadas
+│   ├── installation.md            # installing vcert
+│   ├── authentication.md          # authentication (TPP token / SaaS API key)
+│   ├── playbook-reference.md      # playbook field reference
+│   ├── architecture.md            # flow and per-service diagrams
+│   ├── windows-iis.md             # Windows / IIS guide (CAPI + binding)
+│   ├── revocation.md              # certificate revocation
+│   └── best-practices.md          # detailed best practices
 ├── playbooks/
-│   ├── tpp-selfhosted.yaml        # exemplo completo Self-Hosted (TPP)
-│   ├── saas-vaas.yaml             # exemplo SaaS (VaaS)
-│   ├── multi-format.yaml          # PEM + PKCS12 + JKS no mesmo certificado
+│   ├── tpp-selfhosted.yaml        # full Self-Hosted (TPP) example
+│   ├── saas-vaas.yaml             # SaaS (VaaS) example
+│   ├── multi-format.yaml          # PEM + PKCS12 + JKS for the same certificate
 │   ├── haproxy.yaml               # HAProxy
 │   ├── apache.yaml                # Apache (httpd)
 │   ├── nginx.yaml                 # Nginx
@@ -145,87 +144,87 @@ vcert-examples/
 │   ├── azure-appgw.yaml           # Azure Application Gateway
 │   └── aws-acm.yaml               # AWS ALB/NLB (ACM)
 ├── systemd/
-│   ├── vcert.service              # unit de serviço (oneshot)
-│   └── vcert.timer                # timer para renovação periódica
+│   ├── vcert.service              # service unit (oneshot)
+│   └── vcert.timer                # timer for periodic renewal
 ├── cron/
-│   └── vcert-cron.example         # entrada de crontab de exemplo
+│   └── vcert-cron.example         # example crontab entry
 └── scripts/
-    ├── pre-renew.sh               # hook pré-renovação (genérico)
-    ├── post-renew.sh              # hook pós-renovação (genérico)
-    ├── post-renew-haproxy.sh      # hook pós-renovação para HAProxy
-    ├── post-renew-apache.sh       # hook pós-renovação para Apache
-    ├── post-renew-nginx.sh        # hook pós-renovação para Nginx
-    ├── post-renew-tomcat.sh       # hook pós-renovação para Tomcat
-    ├── post-renew-iis.ps1         # hook pós-renovação para Windows/IIS
-    ├── post-renew-azure-appgw.sh  # hook pós-renovação para Azure App Gateway
-    ├── post-renew-aws-acm.sh      # hook pós-renovação para AWS ACM
-    └── revoke.sh                  # wrapper para vcert revoke
+    ├── pre-renew.sh               # pre-renewal hook (generic)
+    ├── post-renew.sh              # post-renewal hook (generic)
+    ├── post-renew-haproxy.sh      # post-renewal hook for HAProxy
+    ├── post-renew-apache.sh       # post-renewal hook for Apache
+    ├── post-renew-nginx.sh        # post-renewal hook for Nginx
+    ├── post-renew-tomcat.sh       # post-renewal hook for Tomcat
+    ├── post-renew-iis.ps1         # post-renewal hook for Windows/IIS
+    ├── post-renew-azure-appgw.sh  # post-renewal hook for Azure App Gateway
+    ├── post-renew-aws-acm.sh      # post-renewal hook for AWS ACM
+    └── revoke.sh                  # wrapper for vcert revoke
 ```
 
 ---
 
-## Exemplos disponíveis
+## Available examples
 
-| Arquivo | Cenário |
+| File | Scenario |
 |---|---|
-| [`playbooks/tpp-selfhosted.yaml`](playbooks/tpp-selfhosted.yaml) | CyberArk Certificate Manager Self-Hosted (TPP) com access token, CSR local, hooks pré/pós. |
-| [`playbooks/saas-vaas.yaml`](playbooks/saas-vaas.yaml) | CyberArk Certificate Manager SaaS (VaaS) com API key. |
-| [`playbooks/multi-format.yaml`](playbooks/multi-format.yaml) | Mesma emissão gravada em PEM, PKCS#12 e JKS para apps diferentes. |
-| [`playbooks/haproxy.yaml`](playbooks/haproxy.yaml) | **HAProxy** — gera PEM único (cert+chain+key) e faz `reload`. |
-| [`playbooks/apache.yaml`](playbooks/apache.yaml) | **Apache (httpd)** — PEM separados e `graceful reload`. |
-| [`playbooks/nginx.yaml`](playbooks/nginx.yaml) | **Nginx** — monta fullchain (cert+chain) e faz `reload`. |
-| [`playbooks/tomcat.yaml`](playbooks/tomcat.yaml) | **Tomcat** — keystore PKCS#12 e `restart`. |
-| [`playbooks/windows-iis.yaml`](playbooks/windows-iis.yaml) | **Windows / IIS** — store CAPI + bind automático no IIS via PowerShell. |
-| [`playbooks/azure-appgw.yaml`](playbooks/azure-appgw.yaml) | **Azure Application Gateway** — emite .pfx e envia via Azure CLI. |
-| [`playbooks/aws-acm.yaml`](playbooks/aws-acm.yaml) | **AWS ALB/NLB** — importa no ACM (reusa o ARN) via AWS CLI. |
-| [`docs/revocation.md`](docs/revocation.md) | **Revogação** de certificados (`vcert revoke`) + `scripts/revoke.sh`. |
-| [`systemd/`](systemd/) | Renovação agendada via systemd timer (Linux). |
-| [`cron/`](cron/) | Renovação agendada via cron (Linux). |
-| [`scripts/`](scripts/) | Scripts de hook de pré e pós renovação (Linux `.sh` e Windows `.ps1`). |
+| [`playbooks/tpp-selfhosted.yaml`](playbooks/tpp-selfhosted.yaml) | CyberArk Certificate Manager Self-Hosted (TPP) with access token, local CSR, pre/post hooks. |
+| [`playbooks/saas-vaas.yaml`](playbooks/saas-vaas.yaml) | CyberArk Certificate Manager SaaS (VaaS) with API key. |
+| [`playbooks/multi-format.yaml`](playbooks/multi-format.yaml) | Same issuance written as PEM, PKCS#12, and JKS for different apps. |
+| [`playbooks/haproxy.yaml`](playbooks/haproxy.yaml) | **HAProxy** — builds a single PEM (cert+chain+key) and runs `reload`. |
+| [`playbooks/apache.yaml`](playbooks/apache.yaml) | **Apache (httpd)** — separate PEM files and `graceful reload`. |
+| [`playbooks/nginx.yaml`](playbooks/nginx.yaml) | **Nginx** — builds the fullchain (cert+chain) and runs `reload`. |
+| [`playbooks/tomcat.yaml`](playbooks/tomcat.yaml) | **Tomcat** — PKCS#12 keystore and `restart`. |
+| [`playbooks/windows-iis.yaml`](playbooks/windows-iis.yaml) | **Windows / IIS** — CAPI store + automatic IIS binding via PowerShell. |
+| [`playbooks/azure-appgw.yaml`](playbooks/azure-appgw.yaml) | **Azure Application Gateway** — issues a .pfx and uploads via Azure CLI. |
+| [`playbooks/aws-acm.yaml`](playbooks/aws-acm.yaml) | **AWS ALB/NLB** — imports into ACM (reusing the ARN) via AWS CLI. |
+| [`docs/revocation.md`](docs/revocation.md) | **Revocation** of certificates (`vcert revoke`) + `scripts/revoke.sh`. |
+| [`systemd/`](systemd/) | Renewal scheduled via systemd timer (Linux). |
+| [`cron/`](cron/) | Renewal scheduled via cron (Linux). |
+| [`scripts/`](scripts/) | Pre/post renewal hook scripts (Linux `.sh` and Windows `.ps1`). |
 
 ---
 
-## Documentação
+## Documentation
 
-- [Instalação](docs/installation.md)
-- [Autenticação](docs/authentication.md)
-- [Referência do playbook](docs/playbook-reference.md)
-- [Arquitetura e diagramas](docs/architecture.md)
+- [Installation](docs/installation.md)
+- [Authentication](docs/authentication.md)
+- [Playbook reference](docs/playbook-reference.md)
+- [Architecture and diagrams](docs/architecture.md)
 - [Windows / IIS](docs/windows-iis.md)
-- [Revogação](docs/revocation.md)
-- [Boas práticas](docs/best-practices.md)
+- [Revocation](docs/revocation.md)
+- [Best practices](docs/best-practices.md)
 
 ---
 
-## Boas práticas
+## Best practices
 
-Resumo (detalhes em [`docs/best-practices.md`](docs/best-practices.md)):
+Summary (details in [`docs/best-practices.md`](docs/best-practices.md)):
 
-- **Nunca** versione tokens, senhas ou chaves. Use variáveis de ambiente (`{{ Env "VCERT_TOKEN" }}`) ou um cofre.
-- Prefira **CSR local** (`csr: local`) para que a chave privada nunca saia da máquina.
-- Defina `renewBefore` com folga (ex.: 30 dias) e rode a automação **com frequência** (cron/timer a cada 12h).
-- Sempre use `--validate` em mudanças antes de aplicar.
-- Restrinja permissões dos arquivos de chave (`chmod 600`, dono do serviço).
-- Habilite `backupFiles: true` para conseguir reverter rápido.
-- Teste os hooks de pós-renovação garantindo que o serviço **recarrega** o certificado novo.
-- Centralize as políticas (validade, algoritmo, tamanho de chave) na **zone** do servidor.
-
----
-
-## Segurança
-
-Encontrou uma vulnerabilidade ou exposição de segredo? Veja [`SECURITY.md`](SECURITY.md). **Não** abra issue pública com detalhes sensíveis.
+- **Never** version tokens, passwords, or keys. Use environment variables (`{{ Env "VCERT_TOKEN" }}`) or a vault.
+- Prefer **local CSR** (`csr: local`) so the private key never leaves the machine.
+- Set `renewBefore` with margin (e.g., 30 days) and run the automation **frequently** (cron/timer every 12h).
+- Always use `--validate` on changes before applying.
+- Restrict key file permissions (`chmod 600`, owned by the service user).
+- Enable `backupFiles: true` to roll back quickly.
+- Test post-renewal hooks to ensure the service **reloads** the new certificate.
+- Centralize policies (validity, algorithm, key size) in the server-side **zone**.
 
 ---
 
-## Contribuindo
+## Security
 
-Contribuições são bem-vindas! Leia [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de abrir um PR.
+Found a vulnerability or an exposed secret? See [`SECURITY.md`](SECURITY.md). **Do not** open a public issue with sensitive details.
 
 ---
 
-## Licença
+## Contributing
 
-Distribuído sob a licença **MIT**. Veja [`LICENSE`](LICENSE).
+Contributions are welcome! Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a PR.
 
-> Este projeto é **não-oficial** e não é mantido pela CyberArk/Palo Alto Networks. "VCERT", "CyberArk" e "Palo Alto Networks" são marcas de seus respectivos donos.
+---
+
+## License
+
+Distributed under the **MIT** license. See [`LICENSE`](LICENSE).
+
+> This project is **unofficial** and is not maintained by CyberArk/Palo Alto Networks. "VCERT", "CyberArk", and "Palo Alto Networks" are trademarks of their respective owners.

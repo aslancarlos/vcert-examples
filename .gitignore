@@ -1,5 +1,5 @@
 # =============================================================================
-# Segredos e credenciais - NUNCA versionar
+# Secrets and credentials - NEVER commit
 # =============================================================================
 *.token
 *token*
@@ -19,11 +19,11 @@ secrets.*
 credentials.*
 vcert-config.ini
 
-# Permitir exemplos explicitamente marcados como .example
+# Allow examples explicitly marked as .example
 !*.example
 
 # =============================================================================
-# Artefatos do vcert
+# VCERT artifacts
 # =============================================================================
 vcert
 vcert.exe
@@ -31,7 +31,7 @@ vcert.zip
 *.log
 
 # =============================================================================
-# Sistema operacional / editores
+# Operating system / editors
 # =============================================================================
 .DS_Store
 Thumbs.db

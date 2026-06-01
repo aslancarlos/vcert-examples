@@ -1,35 +1,35 @@
-# Autenticação
+# Authentication
 
-O VCERT suporta os dois sabores do CyberArk Certificate Manager. Escolha conforme o seu ambiente.
+VCERT supports both flavors of the CyberArk Certificate Manager. Choose the one matching your environment.
 
 ## Self-Hosted (TPP) — Access Token
 
-### 1. Gerar o token
+### 1. Generate the token
 
 ```bash
 vcert getcred \
-  --username SEU_USUARIO \
-  --password 'SUA_SENHA' \
-  -u https://tpp.suaempresa.com.br/vedsdk \
+  --username YOUR_USER \
+  --password 'YOUR_PASSWORD' \
+  -u https://tpp.yourcompany.com/vedsdk \
   --client-id vcert-cli
 ```
 
-A saída traz `access_token` e `refresh_token`. Guarde o `access_token`.
+The output includes an `access_token` and a `refresh_token`. Keep the `access_token`.
 
-> O `client-id` (`vcert-cli` no exemplo) precisa estar registrado/permitido como aplicação OAuth na plataforma. Fale com o time que administra o CyberArk se receber erro de cliente inválido.
+> The `client-id` (`vcert-cli` in the example) must be registered/allowed as an OAuth application on the platform. Talk to your CyberArk administrators if you get an invalid-client error.
 
-### 2. Renovar o token (opcional)
+### 2. Refresh the token (optional)
 
 ```bash
 vcert getcred \
-  -u https://tpp.suaempresa.com.br/vedsdk \
-  --refresh-token SEU_REFRESH_TOKEN \
+  -u https://tpp.yourcompany.com/vedsdk \
+  --refresh-token YOUR_REFRESH_TOKEN \
   --client-id vcert-cli
 ```
 
-### 3. Fornecer ao playbook
+### 3. Provide it to the playbook
 
-O playbook lê de variável de ambiente:
+The playbook reads from an environment variable:
 
 ```yaml
 credentials:
@@ -37,14 +37,14 @@ credentials:
 ```
 
 ```bash
-export VCERT_TOKEN="cole_o_access_token"
+export VCERT_TOKEN="paste_the_access_token"
 vcert run -f playbooks/tpp-selfhosted.yaml
 ```
 
 ## SaaS (VaaS) — API Key
 
-1. No console do CyberArk Certificate Manager SaaS, gere uma **API Key** no seu perfil.
-2. Forneça via variável de ambiente:
+1. In the CyberArk Certificate Manager SaaS console, generate an **API Key** in your profile.
+2. Provide it via an environment variable:
 
    ```yaml
    credentials:
@@ -52,27 +52,27 @@ vcert run -f playbooks/tpp-selfhosted.yaml
    ```
 
    ```bash
-   export VCERT_APIKEY="sua_api_key"
+   export VCERT_APIKEY="your_api_key"
    vcert run -f playbooks/saas-vaas.yaml
    ```
 
-> A URL pode variar por região (ex.: `https://api.venafi.cloud` ou `https://api.eu.venafi.cloud`).
+> The URL may vary by region (e.g., `https://api.venafi.cloud` or `https://api.eu.venafi.cloud`).
 
-## CA interna / trust bundle
+## Internal CA / trust bundle
 
-Se o endpoint usa uma CA interna não confiável pelo sistema:
+If the endpoint uses an internal CA that the system does not trust:
 
 ```yaml
 connection:
   trustBundle: "/etc/ssl/certs/cyberark-chain.pem"
 ```
 
-## Onde guardar os segredos
+## Where to store secrets
 
-Em ordem de preferência:
+In order of preference:
 
-1. **Cofre** (CyberArk Conjur, HashiCorp Vault) injetando a variável em tempo de execução.
-2. **EnvironmentFile** do systemd (`/etc/vcert/vcert.env`, `chmod 600`).
-3. Variável de ambiente exportada por um script protegido.
+1. A **vault** (CyberArk Conjur, HashiCorp Vault) injecting the variable at runtime.
+2. A systemd **EnvironmentFile** (`/etc/vcert/vcert.env`, `chmod 600`).
+3. An environment variable exported by a protected script.
 
-**Nunca** coloque o token/API key diretamente no YAML versionado.
+**Never** put the token/API key directly in the versioned YAML.

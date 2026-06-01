@@ -1,31 +1,34 @@
 # Changelog
 
-Todas as mudanças relevantes deste projeto são documentadas aqui.
+All notable changes to this project are documented here.
 
-O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
-e este projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Adicionado
-- Playbooks dedicados: `playbooks/haproxy.yaml`, `playbooks/apache.yaml`, `playbooks/tomcat.yaml`.
-- Scripts de pós-renovação por serviço: `scripts/post-renew-haproxy.sh`, `post-renew-apache.sh`, `post-renew-tomcat.sh`.
-- `docs/architecture.md` com diagramas Mermaid (fluxo, componentes e por serviço).
-- Diagrama de fluxo no `README.md`.
-- Suporte a **Windows / IIS**: `playbooks/windows-iis.yaml` (store CAPI), `scripts/post-renew-iis.ps1` (bind no IIS), `docs/windows-iis.md` (guia + Task Scheduler) e diagrama IIS.
-- Playbook e hook para **Nginx**: `playbooks/nginx.yaml`, `scripts/post-renew-nginx.sh`.
-- Balanceadores em nuvem: `playbooks/azure-appgw.yaml` + `scripts/post-renew-azure-appgw.sh` (Azure Application Gateway via Azure CLI) e `playbooks/aws-acm.yaml` + `scripts/post-renew-aws-acm.sh` (AWS ALB/NLB via ACM).
-- **Revogação**: `docs/revocation.md` e `scripts/revoke.sh` (wrapper de `vcert revoke`).
-- Diagramas Mermaid para Nginx, Azure App Gateway, AWS ACM e revogação em `docs/architecture.md`.
+### Changed
+- Translated all documentation and inline code comments to English.
+
+### Added
+- Dedicated playbooks: `playbooks/haproxy.yaml`, `playbooks/apache.yaml`, `playbooks/tomcat.yaml`.
+- Per-service post-renewal scripts: `scripts/post-renew-haproxy.sh`, `post-renew-apache.sh`, `post-renew-tomcat.sh`.
+- `docs/architecture.md` with Mermaid diagrams (flow, components, and per-service).
+- Flow diagram in `README.md`.
+- **Windows / IIS** support: `playbooks/windows-iis.yaml` (CAPI store), `scripts/post-renew-iis.ps1` (IIS binding), `docs/windows-iis.md` (guide + Task Scheduler), and an IIS diagram.
+- Playbook and hook for **Nginx**: `playbooks/nginx.yaml`, `scripts/post-renew-nginx.sh`.
+- Cloud load balancers: `playbooks/azure-appgw.yaml` + `scripts/post-renew-azure-appgw.sh` (Azure Application Gateway via Azure CLI) and `playbooks/aws-acm.yaml` + `scripts/post-renew-aws-acm.sh` (AWS ALB/NLB via ACM).
+- **Revocation**: `docs/revocation.md` and `scripts/revoke.sh` (wrapper for `vcert revoke`).
+- Mermaid diagrams for Nginx, Azure App Gateway, AWS ACM, and revocation in `docs/architecture.md`.
 
 ## [1.0.0] - 2026-06-01
 
-### Adicionado
-- Estrutura inicial do repositório.
-- Playbook de exemplo para CyberArk Certificate Manager Self-Hosted (TPP): `playbooks/tpp-selfhosted.yaml`.
-- Playbook de exemplo para SaaS (VaaS): `playbooks/saas-vaas.yaml`.
-- Playbook multi-formato (PEM + PKCS12 + JKS): `playbooks/multi-format.yaml`.
-- Documentação: instalação, autenticação, referência do playbook e boas práticas.
-- Exemplos de agendamento via cron e systemd timer.
-- Scripts de hook de pré e pós renovação.
+### Added
+- Initial repository structure.
+- Example playbook for CyberArk Certificate Manager Self-Hosted (TPP): `playbooks/tpp-selfhosted.yaml`.
+- Example playbook for SaaS (VaaS): `playbooks/saas-vaas.yaml`.
+- Multi-format playbook (PEM + PKCS12 + JKS): `playbooks/multi-format.yaml`.
+- Documentation: installation, authentication, playbook reference, and best practices.
+- Scheduling examples via cron and systemd timer.
+- Pre and post renewal hook scripts.
 - `LICENSE` (MIT), `SECURITY.md`, `CONTRIBUTING.md`, `.gitignore`.

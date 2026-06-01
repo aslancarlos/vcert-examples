@@ -1,84 +1,84 @@
 # =============================================================================
 # VCERT PLAYBOOK - Windows / IIS (Internet Information Services)
 # =============================================================================
-# No Windows o vcert instala o certificado direto no Windows Certificate Store
-# (CAPI). Em seguida, o afterInstallAction (executado via powershell.exe)
-# faz o bind do certificado no site do IIS.
+# On Windows, VCERT installs the certificate directly into the Windows
+# Certificate Store (CAPI). Then the afterInstallAction (run via powershell.exe)
+# binds the certificate to the IIS site.
 #
-# Executar (PowerShell, como Administrador):
-#   $env:VCERT_TOKEN = "seu_access_token"
+# Run (PowerShell, as Administrator):
+#   $env:VCERT_TOKEN = "your_access_token"
 #   .\vcert.exe run -f playbooks\windows-iis.yaml
 #
-# Validar sem aplicar:  .\vcert.exe run -f playbooks\windows-iis.yaml --validate
-# Forcar renovacao:     .\vcert.exe run -f playbooks\windows-iis.yaml --force-renew
+# Validate without applying:  .\vcert.exe run -f playbooks\windows-iis.yaml --validate
+# Force renewal:              .\vcert.exe run -f playbooks\windows-iis.yaml --force-renew
 #
-# Agendamento: use o Agendador de Tarefas do Windows (Task Scheduler) para
-# rodar este comando 2x/dia. O vcert so renova dentro da janela renewBefore.
+# Scheduling: use the Windows Task Scheduler to run this command twice a day.
+# VCERT only renews within the renewBefore window.
 # =============================================================================
 
 config:
   connection:
     platform: tpp
-    url: "https://tpp.suaempresa.com.br/vedsdk"
+    url: "https://tpp.yourcompany.com/vedsdk"
     credentials:
-      # Le da variavel de ambiente VCERT_TOKEN (nao versione o token!)
+      # Read from the VCERT_TOKEN environment variable (do not version the token!)
       accessToken: "{{ Env \"VCERT_TOKEN\" }}"
-      # trustBundle: "C:\\certs\\cyberark-chain.pem"  # CA interna, se necessario
+      # trustBundle: "C:\\certs\\cyberark-chain.pem"  # internal CA, if needed
 
 certificateTasks:
-  - name: certificado-iis
+  - name: iis-certificate
 
-    # === PRAZO PARA INICIAR A RENOVACAO ===
+    # === LEAD TIME TO START RENEWAL ===
     renewBefore: 30d
 
     request:
-      # No Windows com CAPI, a chave e gerada e armazenada no proprio store.
+      # On Windows with CAPI, the key is generated and stored in the store itself.
       csr: local
 
-      # === DADOS DO CSR (Subject / DN) ===
+      # === CSR DETAILS (Subject / DN) ===
       subject:
-        commonName: "site.suaempresa.com.br"
-        organization: "Sua Empresa S.A."            # O
+        commonName: "site.yourcompany.com"
+        organization: "Your Company Inc."           # O
         organizationalUnits:                         # OU
-          - "Tecnologia da Informacao"
-        locality: "Sao Paulo"                        # L
-        province: "SP"                               # ST
-        country: "BR"                                # C
+          - "Information Technology"
+        locality: "New York"                         # L
+        province: "NY"                               # ST
+        country: "US"                                # C
 
-      # === ALGORITMO E TAMANHO DE CHAVE ===
+      # === ALGORITHM AND KEY SIZE ===
       keyType: rsa
       keySize: 2048          # 2048 / 3072 / 4096
-      # Alternativa ECDSA:
+      # ECDSA alternative:
       # keyType: ecdsa
       # keyCurve: P256
 
       # === SANs ===
       sanDNS:
-        - "site.suaempresa.com.br"
-        - "www.suaempresa.com.br"
+        - "site.yourcompany.com"
+        - "www.yourcompany.com"
 
-      # === PERIODO DE VALIDADE (dias) ===
+      # === VALIDITY PERIOD (days) ===
       validDays: 90
 
-      # === POLITICA / ZONE ===
-      zone: "Certificates\\Producao\\IIS"
+      # === POLICY / ZONE ===
+      zone: "Certificates\\Production\\IIS"
 
     installations:
-      # === Instalacao no Windows Certificate Store (CAPI) ===
+      # === Install into the Windows Certificate Store (CAPI) ===
       - format: CAPI
-        # Local do store: LocalMachine\My (computador) ou CurrentUser\My (usuario).
+        # Store location: LocalMachine\My (computer) or CurrentUser\My (user).
         capiLocation: "LocalMachine\\My"
-        # Nome amigavel exibido no console de certificados (mmc).
-        capiFriendlyName: "site.suaempresa.com.br (VCERT)"
-        # true = chave privada NAO exportavel (mais seguro). false = exportavel.
+        # Friendly name shown in the certificate console (mmc).
+        capiFriendlyName: "site.yourcompany.com (VCERT)"
+        # true = private key NOT exportable (more secure). false = exportable.
         capiIsNonExportable: true
-        # Faz backup antes de sobrescrever na renovacao.
+        # Back up before overwriting on renewal.
         backupFiles: true
 
-        # === ACAO POS-RENOVACAO ===
-        # Executado via powershell.exe. Faz o bind do novo certificado no IIS.
-        # Passa o site e o hostname como argumentos para o script.
-        afterInstallAction: "powershell.exe -ExecutionPolicy Bypass -File C:\\vcert\\scripts\\post-renew-iis.ps1 -SiteName 'Default Web Site' -HostHeader 'site.suaempresa.com.br' -FriendlyName 'site.suaempresa.com.br (VCERT)'"
+        # === POST-RENEWAL ACTION ===
+        # Run via powershell.exe. Binds the new certificate to IIS.
+        # Passes the site and hostname as arguments to the script.
+        afterInstallAction: "powershell.exe -ExecutionPolicy Bypass -File C:\\vcert\\scripts\\post-renew-iis.ps1 -SiteName 'Default Web Site' -HostHeader 'site.yourcompany.com' -FriendlyName 'site.yourcompany.com (VCERT)'"
 
-        # === ACAO PRE-RENOVACAO (opcional) ===
-        # beforeInstallAction: "powershell.exe -ExecutionPolicy Bypass -Command \"Write-Output '[PRE] Iniciando renovacao IIS' | Out-File -Append C:\\vcert\\vcert.log\""
+        # === PRE-RENEWAL ACTION (optional) ===
+        # beforeInstallAction: "powershell.exe -ExecutionPolicy Bypass -Command \"Write-Output '[PRE] Starting IIS renewal' | Out-File -Append C:\\vcert\\vcert.log\""

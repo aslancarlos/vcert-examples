@@ -1,48 +1,48 @@
-# Instalação do VCERT
+# Installing VCERT
 
-O VCERT é distribuído como um binário único (sem dependências). Baixe o release correspondente à sua plataforma.
+VCERT is distributed as a single binary (no dependencies). Download the release matching your platform.
 
 ## Linux (x86_64 / ARM)
 
 ```bash
-# 1) Baixe o release mais recente (ajuste o nome do arquivo conforme a arquitetura)
+# 1) Download the latest release (adjust the filename for your architecture)
 curl -L -o vcert.zip https://github.com/Venafi/vcert/releases/latest/download/vcert_linux.zip
 
-# 2) Descompacte
+# 2) Unzip
 unzip vcert.zip
 
-# 3) Dê permissão de execução
+# 3) Make it executable
 chmod +x vcert
 
-# 4) Mova para um diretório no PATH
+# 4) Move it to a directory on your PATH
 sudo mv vcert /usr/local/bin/vcert
 
-# 5) Verifique
+# 5) Verify
 vcert --version
 ```
 
-> Para ARM (ex.: Raspberry Pi, Graviton), use o artefato `vcert_linux_arm` correspondente na página de [releases](https://github.com/Venafi/vcert/releases).
+> For ARM (e.g., Raspberry Pi, Graviton), use the matching `vcert_linux_arm` artifact on the [releases](https://github.com/Venafi/vcert/releases) page.
 
-## Verificação de integridade (recomendado)
+## Integrity verification (recommended)
 
-Sempre confira o checksum publicado no release antes de instalar em produção:
+Always check the checksum published with the release before installing in production:
 
 ```bash
 sha256sum vcert.zip
-# compare com o valor publicado na página de releases
+# compare with the value published on the releases page
 ```
 
-## Estrutura sugerida em produção
+## Suggested production layout
 
 ```
-/usr/local/bin/vcert          # binário
+/usr/local/bin/vcert          # binary
 /etc/vcert/playbook.yaml      # playbook (chmod 640)
-/etc/vcert/vcert.env          # variáveis com segredos (chmod 600)
+/etc/vcert/vcert.env          # variables with secrets (chmod 600)
 /var/log/vcert.log            # log
 ```
 
-## Próximos passos
+## Next steps
 
-- [Autenticação](authentication.md)
-- [Referência do playbook](playbook-reference.md)
-- [Boas práticas](best-practices.md)
+- [Authentication](authentication.md)
+- [Playbook reference](playbook-reference.md)
+- [Best practices](best-practices.md)

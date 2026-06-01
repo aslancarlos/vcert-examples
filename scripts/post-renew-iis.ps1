@@ -1,13 +1,13 @@
 # =============================================================================
-# Hook POS-RENOVACAO - Windows / IIS
-# Faz o bind do certificado recem-instalado (CAPI) no site do IIS.
-# Chamado pelo afterInstallAction do playbooks/windows-iis.yaml.
+# POST-RENEWAL hook - Windows / IIS
+# Binds the freshly installed certificate (CAPI) to the IIS site.
+# Called by the afterInstallAction in playbooks/windows-iis.yaml.
 #
-# Uso:
+# Usage:
 #   powershell.exe -ExecutionPolicy Bypass -File post-renew-iis.ps1 `
 #     -SiteName 'Default Web Site' `
-#     -HostHeader 'site.suaempresa.com.br' `
-#     -FriendlyName 'site.suaempresa.com.br (VCERT)' `
+#     -HostHeader 'site.yourcompany.com' `
+#     -FriendlyName 'site.yourcompany.com (VCERT)' `
 #     -Port 443
 # =============================================================================
 param(
@@ -23,26 +23,26 @@ $ErrorActionPreference = "Stop"
 
 function Write-Log($msg) {
     $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -Path $LogFile -Value "$ts [POS][iis] $msg"
+    Add-Content -Path $LogFile -Value "$ts [POST][iis] $msg"
 }
 
 try {
     Import-Module WebAdministration -ErrorAction Stop
-    Write-Log "Iniciando bind no site '$SiteName' (porta $Port, host '$HostHeader')"
+    Write-Log "Starting binding on site '$SiteName' (port $Port, host '$HostHeader')"
 
-    # 1) Localiza o certificado mais novo pelo nome amigavel (o recem-renovado).
+    # 1) Find the newest certificate by friendly name (the one just renewed).
     $cert = Get-ChildItem -Path $StorePath |
             Where-Object { $_.FriendlyName -eq $FriendlyName } |
             Sort-Object NotAfter -Descending |
             Select-Object -First 1
 
     if (-not $cert) {
-        throw "Certificado com FriendlyName '$FriendlyName' nao encontrado em $StorePath"
+        throw "Certificate with FriendlyName '$FriendlyName' not found in $StorePath"
     }
     $thumb = $cert.Thumbprint
-    Write-Log "Certificado encontrado. Thumbprint: $thumb (validade ate $($cert.NotAfter))"
+    Write-Log "Certificate found. Thumbprint: $thumb (valid until $($cert.NotAfter))"
 
-    # 2) Garante que existe o binding HTTPS no site.
+    # 2) Ensure the HTTPS binding exists on the site.
     $existing = Get-WebBinding -Name $SiteName -Protocol "https" -ErrorAction SilentlyContinue |
                 Where-Object { $_.bindingInformation -like "*:$Port`:$HostHeader" }
 
@@ -50,25 +50,25 @@ try {
         if ([string]::IsNullOrEmpty($HostHeader)) {
             New-WebBinding -Name $SiteName -Protocol "https" -Port $Port
         } else {
-            # SslFlags 1 = SNI (necessario quando ha host header).
+            # SslFlags 1 = SNI (required when a host header is present).
             New-WebBinding -Name $SiteName -Protocol "https" -Port $Port -HostHeader $HostHeader -SslFlags 1
         }
-        Write-Log "Binding HTTPS criado"
+        Write-Log "HTTPS binding created"
     } else {
-        Write-Log "Binding HTTPS ja existente, reutilizando"
+        Write-Log "HTTPS binding already exists, reusing it"
     }
 
-    # 3) Associa (ou reassocia) o certificado ao binding.
+    # 3) Associate (or re-associate) the certificate with the binding.
     $binding = Get-WebBinding -Name $SiteName -Protocol "https" |
                Where-Object { $_.bindingInformation -like "*:$Port`:$HostHeader" } |
                Select-Object -First 1
     $binding.AddSslCertificate($thumb, "My")
-    Write-Log "Certificado associado ao binding com sucesso"
+    Write-Log "Certificate associated with the binding successfully"
 
-    Write-Log "Renovacao IIS concluida"
+    Write-Log "IIS renewal complete"
     exit 0
 }
 catch {
-    Write-Log "ERRO: $($_.Exception.Message)"
+    Write-Log "ERROR: $($_.Exception.Message)"
     exit 1
 }
